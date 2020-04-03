@@ -44,3 +44,8 @@ Parameter | Description
   * The packets are specified byte by byte in hexadecimal format, they can be assigned to variables as show above and then used in packet specifcations
   * The `*` character can be used as as a wildcard in the receive specification, if * is is specified that byte will not be compared
   * `? <n>` can be used while specifying send packet specification to copy a specified byte from the packet just previously received
+  
+  ## Limitations
+   * The application only supports IPv4 network now
+   
+   
