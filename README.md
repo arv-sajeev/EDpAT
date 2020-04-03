@@ -45,7 +45,7 @@ Parameter | Description
   * The `*` character can be used as as a wildcard in the receive specification, if * is is specified that byte will not be compared
   * `? <n>` can be used while specifying send packet specification to copy a specified byte from the packet just previously received
   
-  ## Limitations
+# 5. Limitations
    * The application only supports IPv4 network now
    
    
