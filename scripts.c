@@ -34,6 +34,24 @@ static int ScriptFileDepth = (-1);
 static SCRIPT_INFO ScriptFileInfoTable[MAX_SCRIPT_FILE_DEPTH];
 static char ScriptLine[MAX_SCRIPT_LINE_LEN];
 
+
+/***************************
+ *
+ *
+ *	ScriptReadStatement()
+ *
+ *	Read a statement from the file provided
+ *
+ *	Arguments 	: 	fp - the input file handle, also keeps track of the current position of the read
+ *				scriptStatement - the statement that is read is loaded to this string
+ *				scriptStatement will have comments removed 
+ *	Return 		:	the strlen or length of the statement read
+ *
+ *
+ *
+ * ************************/
+
+
 int ScriptReadStatement(FILE *fp,char *scriptStatement)
 {
 	int stLen = 0;
@@ -42,8 +60,11 @@ int ScriptReadStatement(FILE *fp,char *scriptStatement)
 	
 
 	scriptStatement[0] = 0;
+
+	// get each line
 	while(NULL != fgets(ScriptLine,MAX_SCRIPT_LINE_LEN,fp))
 	{
+
 		ScriptFileInfoTable[ScriptFileDepth].lineNo++;
 		for(i=0; (0 != ScriptLine[i]); i++) 
 		{
@@ -77,6 +98,7 @@ int ScriptReadStatement(FILE *fp,char *scriptStatement)
 			};
 			if (' ' == ScriptLine[i])
 			{
+				// remove extra spaces jusst keep one if needed
 				if ( EDPAT_FALSE == wasLastCharSpace) 
 				{
 					scriptStatement[stLen]
@@ -87,21 +109,36 @@ int ScriptReadStatement(FILE *fp,char *scriptStatement)
 			}
 			else
 			{
+				// store everything else into scriptStatement
 				scriptStatement[stLen] = ScriptLine[i];
 				stLen++;
 				wasLastCharSpace = EDPAT_FALSE;
 			}
 		}
 	}
+
+	// null terminate string
 	scriptStatement[stLen]=0;
 	return stLen;
 }
 
 
+/***************
+ *
+ *	ScriptOpen()
+ *
+ * 	Opens the file with name given, checks if within MAX limit
+ * 	Log the scriptfile depth, name and line no in the ScriptFileInfoTable
+ *
+ *	Arguments	:	fileName 	- 	Name of the file to be opened
+ *	Return 		:	the file pointer received on opening said file
+ *
+ *
+ ***************/
 FILE *ScriptOpen(const char *fileName)
 {
 	FILE *fp;
-
+	// check whether file inclusion depth is reached
 	if ( (MAX_SCRIPT_FILE_DEPTH - 1)  <= ScriptFileDepth)
 	{
 		ScriptErrorMsgPrint("Cyclic file inclusion");
@@ -129,7 +166,8 @@ FILE *ScriptOpen(const char *fileName)
 		}
 		return NULL;
 	}
-
+	
+	// Include the file in the scriptfileinfo table by adding its name and line no
 	ScriptFileDepth++;
 	strcpy(ScriptFileInfoTable[ScriptFileDepth].fileName,fileName);
 	ScriptFileInfoTable[ScriptFileDepth].lineNo=0;
@@ -139,12 +177,39 @@ FILE *ScriptOpen(const char *fileName)
 
 }
 
+/***************
+ *
+ * 	ScriptClose()
+ *
+ * 	Closes the file pointer provided 
+ *	Updates te ScriptFileInfoTable
+ *
+ *	Arguments	:	fp	-	the input filepointer
+ *
+ * 	Return 		:	void
+ *
+ *
+ * *************/
+
 void ScriptClose(FILE *fp)
 {
 	fclose(fp);
 	ScriptFileDepth--;
 	VerboseStringPrint("Closed script with Fp=%p",fp);
 }
+
+
+/*****************************
+ *
+ * 	ScriptIncludeFile
+ *	
+ *	Validates and checks the filename in the statment provided and then evaluate the included file
+ * 	
+ * 	Arguments	:	in 	-	the current testcase statement under consideration 
+ * 	Return 		:	EDPAT_REVAL saying whether the file was successfully included
+ *
+ *
+ *****************************/
 
 EDPAT_RETVAL ScriptIncludeFile(const char *in)
 {
@@ -154,14 +219,15 @@ EDPAT_RETVAL ScriptIncludeFile(const char *in)
         int retVal;
 	char *p = line;
 
-	strcpy(line,&in[1]); // Skip 1st character '#'
+	strcpy(line,&in[1]); // Skip 1st character '#' and copy the rest to line
+        includeFileName = strtok(p," ");	//Find include filename
 
-        includeFileName = strtok(p," ");
+	// Error handle
         if (NULL == includeFileName)
         {
                 ScriptErrorMsgPrint("Missing name of the file to be include");
                 return EDPAT_FAILED;
-        };
+        }
 
 	// Validate file name
 	for (i=0; 0 != includeFileName[i]; i++)
@@ -177,6 +243,7 @@ EDPAT_RETVAL ScriptIncludeFile(const char *in)
 		}
 	}
 
+	//Check if unexpected string is there after the include file name
         p = strtok(NULL," ");
         if (NULL != p)
 	{
@@ -184,6 +251,7 @@ EDPAT_RETVAL ScriptIncludeFile(const char *in)
                 return EDPAT_FAILED;
 	}
 
+	//Process the include file 
         retVal = TestScriptProcess(includeFileName);
         return retVal;
 }
@@ -202,8 +270,19 @@ void ScriptBacktracePrint(FILE *fp)
 	return;
 }
 
+/*****************************
+ *
+ *	ScriptSubstituteVariables()
+ *
+ *	Substitute the variables in the test statement with the corressponding values in the VarList
+ *
+ *	Arguments	:	iline			-	the testcase statement that is currently under consideration
+ *	Return		:	substituteCount		-	the number of substitution made
+ *
+ *
+ * ***************************/
 
-int      ScriptSubstituteVariables(char *iline)
+int  ScriptSubstituteVariables(char *iline)
 {
 	int retVal;
 	char *inPtr, *outPtr, *varPtr;
@@ -211,17 +290,22 @@ int      ScriptSubstituteVariables(char *iline)
 	int substituteCount = 0;
 	char oline[MAX_SCRIPT_STATEMENT_LEN];
 
-	// copy just the 1st byte to out buffer
         inPtr = &iline[1]; 
+
+	//Copy just the first byte i.e the command to the output buffer
         oline[0]=iline[0]; 
         oline[1]=0;
+	//Null terminate after operation 
 
+	// Get position of the first occurence of a dollar
         varPtr = strchr(inPtr,'$');
         while(NULL != varPtr)
         {
 		substituteCount++;
+		// Set the dollar character as 0 
 		varPtr[0] =0;
 		strcat(oline,inPtr);
+		//Copy string until the varPtr into the outline
 		inPtr += (strlen(inPtr) + 1);
 
 		// Read variable name
@@ -233,19 +317,25 @@ int      ScriptSubstituteVariables(char *iline)
 			return -1;
 		}
 
+		// Check for value of variable
 		varValue = VariableGetValue(varName);
 		if (NULL == varValue)
 		{
 			ScriptErrorMsgPrint("Undefined variable '%s'",varName);
 			return -1;
 		}
+
+		//Add value coressponding to the variable to output buffer
 		strcat(oline,varValue);
 		strcat(oline," ");
 
 		inPtr += (strlen(varName) + 1);
 
+		//Find next variable
         	varPtr = strchr(inPtr,'$');
         }
+
+	//Concatenate the part left after the last variable inclued inthe script
 	strcat(oline,inPtr);
 	if (0 !=  substituteCount)
 	{

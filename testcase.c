@@ -39,6 +39,19 @@ NO EXPRESS OR IMPLIED LICENSES TO ANY PARTY'S PATENT RIGHTS ARE GRANTED BY THIS 
 #include "packet.h"
 #include "print.h"
 
+
+/***********************
+ *	
+ *	CleanupLastTestExecution()
+ *
+ *	It cleans the memory buffer and checks if any unwanted packets have been received
+ *	
+ *	Arguments 	:	void
+ *	Return 		: 	void, but sets the CurrentTestResult
+ *
+ *
+ * *********************/
+
 void CleanupLastTestExecution(void)
 {
 	CheckUnexpectedPackets();
@@ -68,10 +81,13 @@ EDPAT_RETVAL GetTestCaseID(const char *in)
         char *testCaseId;
         int i,len;
 	static char line[MAX_SCRIPT_STATEMENT_LEN];
+	
+	// copy the testcase statement 
 
 	strcpy(line,in);
-
         testCaseId = strtok(&line[1]," ");
+
+	// Check for whether testcase ID matches format or exists
         if (NULL == testCaseId)
         {
                 ScriptErrorMsgPrint("Test case ID expected");
@@ -94,6 +110,8 @@ EDPAT_RETVAL GetTestCaseID(const char *in)
                 ScriptErrorMsgPrint("Testcase ID too long");
                 return EDPAT_FAILED;
         }
+
+
         p = strtok(NULL," ");
         if (NULL != p)
 	{
@@ -102,7 +120,7 @@ EDPAT_RETVAL GetTestCaseID(const char *in)
                 return EDPAT_FAILED;
 	}
 	
-	/* Print result of privious test case and clean-up */
+	/* Print result of previous test case and clean-up */
 	CleanupLastTestExecution();
 
 	// initialize the result to passed to begin with

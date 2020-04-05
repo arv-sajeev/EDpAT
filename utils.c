@@ -21,7 +21,7 @@ NO EXPRESS OR IMPLIED LICENSES TO ANY PARTY'S PATENT RIGHTS ARE GRANTED BY THIS 
  *
  *   TrimStr()
  *
- *   Remove leading and traning blanks from a string
+ *   Remove leading and trailing blanks from a string
  *
  *   Arguments:
  *	str	-	INPUT and OUTPUT. String to be trimmed is as in this
@@ -29,7 +29,7 @@ NO EXPRESS OR IMPLIED LICENSES TO ANY PARTY'S PATENT RIGHTS ARE GRANTED BY THIS 
  *			argument.
  *   Return	-	None
  *
- */
+ ********************/
 
 void TrimStr(char *str)
 {

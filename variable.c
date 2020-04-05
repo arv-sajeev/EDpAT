@@ -38,13 +38,13 @@ static int NextFreeVarListIndex = 0;
  *
  *   Store a variable and its value in VarList[] table
  *
- *   Arguments : 
- *	testScriptStatement - INPUT. A null terminated string which a the 
- *				Test script statement in format
+ *   Arguments : testScriptStatement - 	INPUT. A null terminated string which a the 
+ *					Test script statement in format
  *					$<varName>=<varVal>
- *   Return:	- EDPAT_SUCESS or EDPAT_FAULED
  *
- ********/
+ *   Return:	- EDPAT_SUCESS or EDPAT_FAILED
+ *
+ ***********************/
 
 EDPAT_RETVAL VariableStoreValue(const char *testScriptStatement)
 {
@@ -54,14 +54,15 @@ EDPAT_RETVAL VariableStoreValue(const char *testScriptStatement)
         int i;
 
 	/* check syntax and seperate varible name and its value from statment */
-        strcpy(tmp,&testScriptStatement[1]);
+        strcpy(tmp,testScriptStatement);
         varName = tmp;
         varValue = strchr(tmp,'=');
         if (NULL == varValue)
         {
                 ScriptErrorMsgPrint("Expecting the format $vaname=value");
                 return EDPAT_FAILED;
-        };
+        }
+	// cz this is the point where the = sign is found puttinh a 0 makes it two different strings
         varValue[0] = 0; // null teminate varName;
 
         varValue++; // skil '='
@@ -69,7 +70,8 @@ EDPAT_RETVAL VariableStoreValue(const char *testScriptStatement)
         TrimStr(varName);
         TrimStr(varValue);
 
-        /* check variable is already exiting. If yes, overwrite value */
+        // check variable is already existing. If yes, overwrite value  log this in logfile if in verbose mode
+	
         for(i=0; i < NextFreeVarListIndex; i++)
         {
                 if (0 == strcmp(varName,VarList[i].varName))
@@ -89,8 +91,8 @@ EDPAT_RETVAL VariableStoreValue(const char *testScriptStatement)
 
 	if (MAX_VAR_COUNT <= (NextFreeVarListIndex+1))
 	{
-                ScriptErrorMsgPrint("Too many varible(%d) defined."
-			"only %d is allowed",
+                ScriptErrorMsgPrint("Too many variables %d defined."
+			"only %d are allowed",
 			NextFreeVarListIndex, MAX_VAR_COUNT);
 			return EDPAT_FAILED;
 	}
@@ -101,7 +103,7 @@ EDPAT_RETVAL VariableStoreValue(const char *testScriptStatement)
         NextFreeVarListIndex++;
 	VerboseStringPrint("Variable '%s' with value '%s' added.",
 			varName,varValue);
-	VaribalePrintValues();
+	VariablePrintValues();
         return EDPAT_SUCCESS;
 }
 
@@ -116,7 +118,7 @@ EDPAT_RETVAL VariableStoreValue(const char *testScriptStatement)
  *   Return:
  *	value of the variable. NULL if not found.
  *
- ********/
+ **********************/
 char *VariableGetValue(const char *varName)
 {
 	int i;
@@ -132,7 +134,7 @@ char *VariableGetValue(const char *varName)
 
 
 /***********************
- *   VaribalePrintValues()
+ *   VariablePrintValues()
  *
  *   Print variable name and its value on the screent.
  *
@@ -142,8 +144,8 @@ char *VariableGetValue(const char *varName)
  *   Return:
  *	None
  *
- ********/
-void VaribalePrintValues(void)
+ ***********************/
+void VariablePrintValues(void)
 {
 	int i;
 	static char msg[MAX_SCRIPT_STATEMENT_LEN];

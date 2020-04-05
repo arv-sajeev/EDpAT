@@ -57,6 +57,22 @@ signed short SpecifiedPktMask[MAX_PKT_SIZE];
 #define	MASK_EXACT	(-1)
 #define	MASK_SKIP	(-2)
 
+
+
+/******************
+ *
+ *	
+ *
+ *	CheckUnexpectedPackets()
+ *	
+ *	After the testcase has passed check if there are any other unexpected packets left in the queue
+ *	It uses receive any to read any packets left in the queue
+ *	
+ *	Arguments	:	void, also sets the CurrentTestResult to appropriate value
+ *
+ *
+ *******************/
+
 void CheckUnexpectedPackets(void)
 {
 	EDPAT_RETVAL retVal = EDPAT_SUCCESS;

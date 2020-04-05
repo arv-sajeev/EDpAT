@@ -16,6 +16,6 @@ NO EXPRESS OR IMPLIED LICENSES TO ANY PARTY'S PATENT RIGHTS ARE GRANTED BY THIS 
 
 EDPAT_RETVAL VariableStoreValue(const char *testScriptStatement);
 char *VariableGetValue(const char *varName);
-void VaribalePrintValues(void);
+void VariablePrintValues(void);
 
 #endif
