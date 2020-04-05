@@ -4,7 +4,7 @@ EDpAT stands for Ethernet Dataplane Application Tester. It is a test tool to tes
 The packets to be sent/received are specified in an input script file in the desired order.The tool will read this file as input and send/receive the packets as specified in the file. The received packets are compared against what is specified in the script file to determine the the result of each testcase
 
 # 2. Installation 
-The Makefile has been included in this repository. Just run make in the working directory
+The Makefile has been included in this repository. Just run `make` in the working directory
 
 # 3. Usage
  
@@ -45,7 +45,7 @@ Parameter | Description
   * The `*` character can be used as as a wildcard in the receive specification, if * is is specified that byte will not be compared
   * `? <n>` can be used while specifying send packet specification to copy a specified byte from the packet just previously received
   
-  ## Limitations
+# 5. Limitations
    * The application only supports IPv4 network now
    
    
