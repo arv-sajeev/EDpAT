@@ -61,7 +61,6 @@ signed short SpecifiedPktMask[MAX_PKT_SIZE];
 
 /******************
  *
- *	
  *
  *	CheckUnexpectedPackets()
  *	
@@ -97,9 +96,20 @@ void CheckUnexpectedPackets(void)
 	return;
 }
 
+/*********************
+ *
+ *	packetRead
+ *
+ *	Parse the details from the test statement, set Operation ethport and process special characters
+ *
+ *	Arguments	:	in	-	Test statement under consideration 
+ *
+ *	Return 		:	EDPAT_RETVAL
+ *
+ *
+ * ********************/
 
-
-static int packetRead(const char *in)
+static EDPAT_RETVAL packetRead(const char *in)
 {
 	static char statement[MAX_SCRIPT_STATEMENT_LEN];
 	char *token, *q;
@@ -116,22 +126,22 @@ static int packetRead(const char *in)
 			Operation = OP_SEND;
 			break;
 		default:
-			ScriptErrorMsgPrint("Unexpected charater '%c(%d)'",
+			ScriptErrorMsgPrint("Unexpected character '%c(%d)'",
 				in[0],in[0]);
 			return EDPAT_FAILED;
 		
 	}
 
-	strcpy(statement,&in[1]);	// Skip the 1st character '<' or '>'
-
+	strcpy(statement,&in[1]);	// Skip the 1st character Which will be operation 
+	//Copy the ethport name
 	token = strtok(statement," ");
         if (NULL == token)
         {
-                ScriptErrorMsgPrint("Missing Ethernt Port Name");
+                ScriptErrorMsgPrint("Missing Ethernet Port Name");
                 return EDPAT_FAILED;
         };
 
-	// Validate ethernet port anme
+	// Validate ethernet port name
 	if (MAX_ETH_PORT_NAME_LEN <= strlen(token))
 	{
 		ScriptErrorMsgPrint("Ethernet Port Name '%s' too long. "
@@ -141,7 +151,7 @@ static int packetRead(const char *in)
 	}
 
 	strcpy(EthPortName,token);
-	/* Open the port it is it not already open */
+	/* Open the port if not already open */
 	retVal = EthPortOpen(EthPortName);
 	if ( 0 >  retVal)
 		return EDPAT_FAILED;
@@ -159,13 +169,14 @@ static int packetRead(const char *in)
 				{
 					ScriptErrorMsgPrint(
 					    "Invalid character '*'. It is "
-					    "valid only in receved packet");
+					    "valid only in receive");
 					return EDPAT_FAILED;
 				}
+				//Set the byte as zero and mark in mask as MASK_SKIP
 				SpecifiedPkt[BytesInSpecifiedPkt]  = 0;
 				SpecifiedPktMask[BytesInSpecifiedPkt] = MASK_SKIP;
 				break;
-			case '?':	// copy from last recevied packet
+			case '?':	// copy from last received packet
 				if (OP_SEND != Operation)
 				{
 					ScriptErrorMsgPrint(
@@ -173,6 +184,7 @@ static int packetRead(const char *in)
 					    "valid only in send packet");
 					return EDPAT_FAILED;
 				}
+				// Copy the n value after ?
 				byte = (unsigned char ) strtol(&token[1],&q,10);
 				if ( token == q)
 				{
@@ -180,21 +192,29 @@ static int packetRead(const char *in)
 						"'%s' is not a integer value",token);
 					return EDPAT_FAILED;
 				};
+
+				// Check if within limits
 				if ( MAX_PKT_SIZE < BytesInSpecifiedPkt)
 				{
 					ScriptErrorMsgPrint("Pkt too large");
 					return EDPAT_FAILED;
 				};
+
+
+				// Check for tail in the packet 
 				if ((NULL != q) && (0 != q[0]))
 				{
 					ScriptErrorMsgPrint("Invalid character "
 						"at the end of '%s'",token);
 					return EDPAT_FAILED;
 				};
+
+				//Set byte and mask
 				SpecifiedPkt[BytesInSpecifiedPkt]  = 0;
 				SpecifiedPktMask[BytesInSpecifiedPkt] = byte;
 				break;
 			default:
+				//Default just copy the byte in 
 				byte = (unsigned char ) strtol(token,&q,16);
 				if ( token == q)
 				{
@@ -236,6 +256,19 @@ static int packetRead(const char *in)
 	return EDPAT_SUCCESS;
 }
 
+/*****************************
+ *
+ *	packetSend
+ *
+ *	When Operation specified is OP_SEND, it send the specified packet to the 
+ *	
+ *	Arguments	:	void	 
+ *
+ *	Return 		:	EDPAT_RETVAL
+ *
+ *
+ * ***************************/
+
 
 static EDPAT_RETVAL packetSend(void)
 {
@@ -245,18 +278,21 @@ static EDPAT_RETVAL packetSend(void)
 
 	for(pktLen=0; pktLen < BytesInSpecifiedPkt; pktLen++)
 	{
+		// If it is the eaxact case with no special character
 		if (MASK_EXACT == SpecifiedPktMask[pktLen])
 		{
 			pkt[pktLen] = SpecifiedPkt[pktLen];
 		}
+		//Special character usage 
 		else
 		{
+			// In ? <n> case mask is greater than 0 and represents postion in previous received packet
 			if ( 0 <= SpecifiedPktMask[pktLen])
 			{
+				// Check whether n is within bounds of the previous packet
 				if (BytesInRecvPkt > SpecifiedPktMask[pktLen])
 				{
-					pkt[pktLen] =
-					   RecvPkt[SpecifiedPktMask[pktLen]];
+					pkt[pktLen] = RecvPkt[SpecifiedPktMask[pktLen]];
 				}
 				else
 				{
@@ -277,10 +313,23 @@ static EDPAT_RETVAL packetSend(void)
 		}
 	}
 
+	//  Send the packet
 	retVal = EthPortSend(EthPortName, pkt, pktLen);
 
 	return retVal;
 }
+
+
+/*********************************
+ *
+ *	packetReceive 
+ *
+ * 	Receives packets and checks according to the current testcase statement
+ *	Arguments	:	void
+ *	Return 		: 	void
+ *
+ *
+ * ******************************/
 
 static EDPAT_RETVAL packetReceive(void)
 {
@@ -288,7 +337,8 @@ static EDPAT_RETVAL packetReceive(void)
 	EDPAT_RETVAL retVal;
 
 	BytesInRecvPkt = sizeof(RecvPkt);
-
+	
+	//	Wait to receive packet from ethport for given waitperiod
 	retVal = EthPortReceive(EthPortName, RecvPkt, &BytesInRecvPkt);
 	if (EDPAT_SUCCESS != retVal)
 	{
@@ -306,10 +356,13 @@ static EDPAT_RETVAL packetReceive(void)
 		return EDPAT_FAILED;
 	}
 
+	// Check if length is atleast as much as specified
 	if ( BytesInSpecifiedPkt > BytesInRecvPkt)
 	{
 		pktLen = BytesInRecvPkt;
 	}
+
+	// If its more truncate the rest since there maybe padding
 	else
 	{
 		pktLen = BytesInSpecifiedPkt;
@@ -328,7 +381,7 @@ static EDPAT_RETVAL packetReceive(void)
 						EDPAT_TEST_RESULT_FAILED;
 					TestCaseStringPrint(
 						"Missmatch at byte %d of "
-						"Packet receved on "
+						"Packet received on "
 						"Eth Port'%s'",
 						i,EthPortName);
 					TestCaseStringPrint(
@@ -337,7 +390,7 @@ static EDPAT_RETVAL packetReceive(void)
 					TestCasePacketPrint(SpecifiedPkt,
 						BytesInSpecifiedPkt);
 					TestCaseStringPrint(
-						"Actual packet recevied. "
+						"Actual packet received. "
 						" Len=%d",
 						BytesInRecvPkt);
 					TestCasePacketPrint(RecvPkt,
@@ -350,10 +403,12 @@ static EDPAT_RETVAL packetReceive(void)
 				break;
 		}
 	}
+
+	// Padding is used to make it a minimum size of  60 it its more than that, the packet is just wrong and not bigger than ecpected due to padding
 	if ( (60 < BytesInRecvPkt ) && (BytesInSpecifiedPkt != BytesInRecvPkt))
 	{
 		CurrentTestResult = EDPAT_TEST_RESULT_FAILED;
-		TestCaseStringPrint("Number of bytes recevied at '%s' "
+		TestCaseStringPrint("Number of bytes received at '%s' "
 			"does not match. Epected=%d, actual=%d",
 			EthPortName,
 			BytesInSpecifiedPkt,
@@ -371,6 +426,18 @@ static EDPAT_RETVAL packetReceive(void)
 	return EDPAT_SUCCESS;
 }
 
+/*************************
+ *
+ *	PacketProcess
+ *
+ *	Processes each packet test case calling receive or send based on operation, calls packetRead to process 
+ *	Special chars in packet and set up the ethernet ports required
+ *
+ *	Arguments	:	in	-	the testcase under consideration 
+ *
+ *	Return 		 EDPAT_RETVAL
+ *
+ *************************/
 
 EDPAT_RETVAL PacketProcess(const char *in)
 {

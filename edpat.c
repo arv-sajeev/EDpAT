@@ -97,13 +97,13 @@ EDPAT_RETVAL TestScriptProcess(const char *fileName)
 		// If test case fails or is faulty skip until the next testcase ID 
 		if (	( '@' != testScriptStatement[0] ) && (( EDPAT_TEST_RESULT_SKIP ==  CurrentTestResult) || ( EDPAT_TEST_RESULT_FAILED ==  CurrentTestResult)))
 		{
-			// if test case is not passed. Skip to next teste spec
+			// if test case is not passed. Skip to next test statement 
 			continue;
 		}
 
 		switch(testScriptStatement[0])
 		{
-			case '#':	// include file
+			case '#':	// include file an recursivily process the included file as well
 				retVal = ScriptIncludeFile(testScriptStatement);
 				break;
 			case '@':	// test case ID
@@ -119,7 +119,8 @@ EDPAT_RETVAL TestScriptProcess(const char *fileName)
 					CurrentTestResult = EDPAT_TEST_RESULT_PASSED;
 				}
 				if (EDPAT_TRUE != SyntaxCheckOnly)
-				{
+				{	
+					//Process the packet given in the receive or send test statement
 					retVal = PacketProcess(testScriptStatement);
 				}
 				else
@@ -130,6 +131,7 @@ EDPAT_RETVAL TestScriptProcess(const char *fileName)
 			case '$':	// assign value to variable
 				retVal = VariableStoreValue(testScriptStatement);
 				break;
+				// Unknown command
 			default:
 				ScriptErrorMsgPrint("Unknown statement '%c(%d)'",
 					testScriptStatement[0],

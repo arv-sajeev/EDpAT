@@ -74,7 +74,17 @@ static const char *getTime(void)
         return str;
 }
 
-
+/*************************
+ *
+ *	GetTestCaseID
+ *
+ *	Searches for the tescaseID from the input statementn and sets CurrentTestCaseId and prints the entry message for the testcase
+ *	
+ *	Arguments	:	in 	- 	The input testcase statement that is under consideration 
+ *	Return		:	EDPAT_RETVAL	
+ *
+ *
+ * ***********************/
 EDPAT_RETVAL GetTestCaseID(const char *in)
 {
         char *p;
@@ -87,13 +97,13 @@ EDPAT_RETVAL GetTestCaseID(const char *in)
 	strcpy(line,in);
         testCaseId = strtok(&line[1]," ");
 
-	// Check for whether testcase ID matches format or exists
+	// Check for whether testcase ID exists
         if (NULL == testCaseId)
         {
                 ScriptErrorMsgPrint("Test case ID expected");
                 return EDPAT_FAILED;
         }
-
+	//Matches the prescribed format
         len =strlen(testCaseId);
         for(i=0; i < len; i++)
         {
@@ -105,6 +115,8 @@ EDPAT_RETVAL GetTestCaseID(const char *in)
                         return EDPAT_FAILED;
                 }
         }
+
+	//Is within the max size
         if (MAX_TESTCASE_ID_LEN <= len)
         {
                 ScriptErrorMsgPrint("Testcase ID too long");
