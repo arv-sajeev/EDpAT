@@ -152,7 +152,7 @@ static EDPAT_RETVAL packetRead(const char *in)
 
 	strcpy(EthPortName,token);
 	/* Open the port if not already open */
-	retVal = EthPortOpen(EthPortName);
+	retVal = ethPortOpen(EthPortName);
 	if ( 0 >  retVal)
 		return EDPAT_FAILED;
 

@@ -112,11 +112,9 @@ EDPAT_RETVAL VariableStoreValue(const char *testScriptStatement)
  *
  *   Get value of a varible from the table.
  *
- *   Arguments
- *      varName - INPUT. Name for the variable for which value is needed.
+ *   Arguments	:	varName - Name for the variable for which value is needed.
  *
- *   Return:
- *	value of the variable. NULL if not found.
+ *   Return	:	value of the variable. NULL if not found.
  *
  **********************/
 char *VariableGetValue(const char *varName)
@@ -138,11 +136,9 @@ char *VariableGetValue(const char *varName)
  *
  *   Print variable name and its value on the screent.
  *
- *   Arguments :
- *      None.
+ *   Arguments 	:	void
  *
- *   Return:
- *	None
+ *   Return	:	void
  *
  ***********************/
 void VariablePrintValues(void)

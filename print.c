@@ -431,7 +431,7 @@ void TestCaseStringPrint( const char *format, ...)
 {
 	va_list ap;
 
-	// construct error string from veriable argumnets
+	// construct error string from variable argumnets
 	va_start (ap, format);
 	vsnprintf (Msg, MAX_MSG_LEN, format, ap);
 	va_end (ap);
@@ -450,6 +450,18 @@ void TestCasePacketHeaderPrint(const void *pkt)
 {
 	ethHeaderPrint(LogFp, pkt);
 }
+
+
+/*****************
+ *
+ * 	PrintUsageInfo
+ *
+ * 	prints usage info
+ *	
+ *	Arguments	: 	exeName
+ *	Return 		: void
+ *
+ ******************/
 
 void PrintUsageInfo(const char *exeName)
 {

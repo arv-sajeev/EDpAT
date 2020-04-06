@@ -256,6 +256,18 @@ EDPAT_RETVAL ScriptIncludeFile(const char *in)
         return retVal;
 }
 
+/************************
+ *
+ *	ScriptBacktracePrint
+ *
+ *	Prints the backtrace in case something goes wrong, info all from the scriptInfo table 
+ *	with the names of othe files and the line number progress within the file
+ *
+ * 	Arguments	:	fp	-	The output file pointer 
+ * 	Return 		: 	void
+ *
+ * **********************/
+
 void ScriptBacktracePrint(FILE *fp)
 {
 	int i;

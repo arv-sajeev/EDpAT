@@ -62,6 +62,18 @@ void CleanupLastTestExecution(void)
 	return;
 }
 
+/*************************
+ *
+ *	getTime
+ *
+ *	Get a timestamp
+ *
+ *	Arguments	:	void
+ *	Retrun		: 	timestamp in format	%Y-%m-%d %H:%M:%S
+ *
+ *
+ * ***********************/
+
 static const char *getTime(void)
 {
         time_t t;
