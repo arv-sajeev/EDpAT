@@ -5,10 +5,10 @@
 !	System specific variables (SET THIS AS PER YOUR NETWORK CONFIGURATION)
 
 $DST_MAC = 7C CB E2 D7 DF 01;
-$DST_IP  = C0 A8 65 2B;
+$DST_IP  = C0 A8 65 01;
 
 $SRC_MAC = B4 6D 83 D9 54 7C;
-$SRC_IP = C0 A8 65 01;
+$SRC_IP = C0 A8 65 DB;
 
 
 !	Ethernet frame EtherType values
@@ -27,7 +27,7 @@ $ARP_PT = 08 00;
 $ARP_HLEN = 06;
 $ARP_PLEN = 04;
 
-$ARP_REQ = 00 00 00 01;
-$ARP_REP = 00 00 00 02;
+$ARP_REQ = 00 01;
+$ARP_REP = 00 02;
 
 

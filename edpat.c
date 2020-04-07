@@ -95,7 +95,7 @@ EDPAT_RETVAL TestScriptProcess(const char *fileName)
 		}
 
 		// If test case fails or is faulty skip until the next testcase ID 
-		if (	( '@' != testScriptStatement[0] ) && (( EDPAT_TEST_RESULT_SKIP ==  CurrentTestResult) || ( EDPAT_TEST_RESULT_FAILED ==  CurrentTestResult)))
+		if (	( '@' != testScriptStatement[0] ) && (( EDPAT_TEST_RESULT_SKIPPED ==  CurrentTestResult) || ( EDPAT_TEST_RESULT_FAILED ==  CurrentTestResult)))
 		{
 			// if test case is not passed. Skip to next test statement 
 			continue;

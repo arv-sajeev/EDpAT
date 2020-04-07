@@ -96,7 +96,7 @@ static void ethPortClose(ETH_PORT_INFO *p)
 		pthread_cancel(p->pThread);
 		p->pThread = (-1);
 		VerboseStringPrint(
-			"Receiver thread stoped for %s", p->portName);
+			"Receiver thread stopped for %s", p->portName);
 	}
 	if ( 0 <= p->ethPortSocketFd)
 	{

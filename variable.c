@@ -53,8 +53,8 @@ EDPAT_RETVAL VariableStoreValue(const char *testScriptStatement)
         char *varValue;
         int i;
 
-	/* check syntax and seperate varible name and its value from statment */
-        strcpy(tmp,testScriptStatement);
+	/* check syntax and seperate variable name and its value from statment */
+        strcpy(tmp,&testScriptStatement[1]);
         varName = tmp;
         varValue = strchr(tmp,'=');
         if (NULL == varValue)

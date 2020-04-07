@@ -1,13 +1,19 @@
-// here set the interface that is connected to gateway in the ARP table to set it up for your system
+! here set the interface that is connected to gateway in the ARP table to set it up for your system
 
-#header.txt
 ! Follow the following template to create a testscript
 ! 1.  Send an ARP Request packet to the interface <if_name> using the followig format below 
 ! 2.  Set the values in header.txt and set the if_name and uncomment
 
+!       System specific variables (SET THIS AS PER YOUR NETWORK CONFIGURATION)
+
+#header.txt;
+
+! packet format is dst_mac src_mac eth_type 
+
+> wlp3s0  $DST_MAC $SRC_MAC $ET_ARP $ARP_HT $ARP_PT $ARP_HLEN $ARP_PLEN $ARP_REQ $SRC_MAC $SRC_IP 00 00 00 00 00 00 $DST_IP; 
 
 
-! > <if_name>  $DST_MAC $SRC_MAC $ET_ARP $ARP_HT $ARP_PT $ARP_HLEN $ARP_PLEN $ARP_REQ $SRC_MAC $SRC_IP 00 00 00 $DST_IP 
+< wlp3s0  $SRC_MAC $DST_MAC $ET_ARP $ARP_HT $ARP_PT $ARP_HLEN $ARP_PLEN $ARP_REP $DST_MAC $DST_IP $SRC_MAC $SRC_IP;
 
 
-! > <if_name>  $SRC_MAC $DST_MAC $ET_ARP $ARP_HT $ARP_PT $ARP_HLEN $ARP_PLEN $ARP_REP $DST_MAC $DST_IP $SRC_MAC $SRC_IP
+
