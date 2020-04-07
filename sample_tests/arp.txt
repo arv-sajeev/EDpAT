@@ -4,16 +4,16 @@
 ! 1.  Send an ARP Request packet to the interface <if_name> using the followig format below 
 ! 2.  Set the values in header.txt and set the if_name and uncomment
 
-!       System specific variables (SET THIS AS PER YOUR NETWORK CONFIGURATION)
 
+!	This header file contains the values of most fields
 #header.txt;
 
-! packet format is dst_mac src_mac eth_type 
+! packet format is dst_mac | src_mac | eth_type | hw_type | pr_type | hw_len | pr_len | opcode | src_mac | src_ip | dst_mac | dst_ip
 
-> wlp3s0  $DST_MAC $SRC_MAC $ET_ARP $ARP_HT $ARP_PT $ARP_HLEN $ARP_PLEN $ARP_REQ $SRC_MAC $SRC_IP 00 00 00 00 00 00 $DST_IP; 
+! Change <ifname> below according to your network config 
 
-
-< wlp3s0  $SRC_MAC $DST_MAC $ET_ARP $ARP_HT $ARP_PT $ARP_HLEN $ARP_PLEN $ARP_REP $DST_MAC $DST_IP $SRC_MAC $SRC_IP;
+> <ifname>  $DST_MAC $SRC_MAC $ET_ARP $ARP_HT $ARP_PT $ARP_HLEN $ARP_PLEN $ARP_REQ $SRC_MAC $SRC_IP 00 00 00 00 00 00 $DST_IP; 
+< <ifname>  $SRC_MAC $DST_MAC $ET_ARP $ARP_HT $ARP_PT $ARP_HLEN $ARP_PLEN $ARP_REP $DST_MAC $DST_IP $SRC_MAC $SRC_IP;
 
 
 
