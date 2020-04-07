@@ -41,7 +41,7 @@ Parameter | Description
   `>` | Used to send a specified packet sequence to a specified interface `> <interface-id> <packet-specification>;`
   `$` | Used to declare a variable and assign a value to it `$<var-name>=<value>;`
   ## Packet specification 
-  * The packets are specified byte by byte in hexadecimal format, they can be assigned to variables as show above and then used in packet specifcations
+  * The packets are specified byte by byte in hexadecimal format, they can be assigned to variables as shown above and then used in packet specifications
   * The `*` character can be used as as a wildcard in the receive specification, if * is is specified that byte will not be compared
   * `? <n>` can be used while specifying send packet specification to copy a specified byte from the packet just previously received
   
