@@ -4,4 +4,4 @@ I have included a set of simple tesscripts to show how the testscripts work for 
 #Setup
 
 ## 1. Find the details of your interfaces
-	* run the `ip addr show` command, you will get a list of the different interfaces and the details linked to each one
+* run the `ip addr show` command, you will get a list of the different interfaces and the details linked to each one
