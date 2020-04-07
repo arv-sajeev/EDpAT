@@ -1,0 +1,33 @@
+!This is the sample header file to run basic tests in EDpAT
+
+
+
+!	System specific variables (SET THIS AS PER YOUR NETWORK CONFIGURATION)
+
+$DST_MAC = 00 00 00 00 00 00;
+$DST_IP = 00 00 00 00;
+
+$SRC_MAC = 00 00 00 00 00 00;
+$SRC_IP = 00 00 00 00;
+
+
+!	Ethernet frame EtherType values
+
+$ET_IPV4 = 08 00;
+$ET_ARP  = 08 06;
+$ET_RARP = 80 35;
+$ET_LLDP = 88 CC;
+
+
+!	ARP values
+
+$ARP_HT = 00 01;
+$ARP_PT = 08 00;
+
+$ARP_HLEN = 06;
+$ARP_PLEN = 04;
+
+$ARP_REQ = 00 00 00 01;
+$ARP_REP = 00 00 00 02;
+
+
