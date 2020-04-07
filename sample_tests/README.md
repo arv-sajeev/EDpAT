@@ -29,5 +29,10 @@ MAC Destination address | MAC Source address | Ethertype (length in IEEE 802.3) 
 # Sample scripts
 
 ## 1. ARP
+1. The file `arp.txt` in `sample_tests` can be run using `sudo ./edpat.exe ./sample_tests/arp.txt`. 
+1. Set the required values in header.txt to send an ARP request packet to your default gateway and check whether you are receiving the required response which is an ARP Reply with the MAC address of the requested IP
+1. Use the following link as reference to make custom [ARP payload](http://www.tcpipguide.com/free/t_ARPMessageFormat.htm)
+
+
 
  

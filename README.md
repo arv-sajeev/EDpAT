@@ -30,6 +30,7 @@ Parameter | Description
     * Test statement can span across multiple lines
   * The `!` is used to make comments, if found on a line the rest of the line is taken as a comment
   * The first character of a statement indicates the action performed by that statement
+  * Refer [Sample scripts](https://github.com/arv-sajeev/EDpAT/tree/master/sample_tests) for simple, easy to follow testscripts.
   
   ## List of commands 
   
