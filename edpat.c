@@ -73,7 +73,7 @@ EDPAT_RETVAL TestScriptProcess(const char *fileName)
 	FILE *fp;
 	int lineLen;
 	int statementLen;
-	static char testScriptStatement[MAX_SCRIPT_LINE_LEN];
+	static char testScriptStatement[MAX_SCRIPT_STATEMENT_LEN];
 	
 	// Open the file handle for the script file and add details to the scriptinfo table 
 	fp = ScriptOpen(fileName);

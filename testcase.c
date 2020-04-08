@@ -106,7 +106,7 @@ EDPAT_RETVAL GetTestCaseID(const char *in)
 	
 	// copy the testcase statement 
 
-	strcpy(line,in);
+	strncpy(line,in,MAX_SCRIPT_LINE_LEN);
         testCaseId = strtok(&line[1]," ");
 
 	// Check for whether testcase ID exists
@@ -150,7 +150,7 @@ EDPAT_RETVAL GetTestCaseID(const char *in)
 	// initialize the result to passed to begin with
 	CurrentTestResult = EDPAT_TEST_RESULT_PASSED;
 
-        strcpy(CurrentTestCaseId,testCaseId);
+        strncpy(CurrentTestCaseId,testCaseId,MAX_TESTCASE_ID_LEN);
 	TestCaseStringPrint("######### TEST CASE = %s #########",
 				CurrentTestCaseId);
 	TestCaseStringPrint("TIME %s",getTime());

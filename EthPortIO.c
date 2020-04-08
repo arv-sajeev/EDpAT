@@ -48,6 +48,7 @@ typedef struct {
 } ETH_PORT_INFO;
 
 static ETH_PORT_INFO EthPortInfoTable[MAX_ETH_PORT_COUNT];
+//ETH_PORT_INFO EthPortInfoTable[MAX_ETH_PORT_COUNT];
 static int EthPortCount = 0;
 static EDPAT_BOOL ArrayInitFlag = EDPAT_FALSE;
 static int MqMsgSize = 0;
@@ -328,6 +329,8 @@ static void *ReceiverPthreadFunc(void *vargp)
  *
  *********************************/
 
+extern char *XXX;
+
 int EthPortOpen(const char *portName)
 {
 	int socketOpt;
@@ -338,7 +341,6 @@ int EthPortOpen(const char *portName)
 	EDPAT_RETVAL retVal;
 	int portIdx;
 	struct mq_attr mqAttr;
-	
 	// Just do this the first time clear te full table
 	if (EDPAT_FALSE == ArrayInitFlag)
 	{
@@ -367,7 +369,7 @@ int EthPortOpen(const char *portName)
 		return portIdx;
 	}
 	// Save name
-	strcpy(EthPortInfoTable[EthPortCount].portName,portName);
+	strncpy(EthPortInfoTable[EthPortCount].portName,portName,MAX_ETH_PORT_NAME_LEN);
 	// Stoer socketfd
 	EthPortInfoTable[EthPortCount].ethPortSocketFd =
 			socket(AF_PACKET,SOCK_RAW,htons(ETH_P_ALL));
@@ -396,7 +398,7 @@ int EthPortOpen(const char *portName)
 		ethPortClose(&EthPortInfoTable[EthPortCount]);
 		return -1;
 	}
-	strcpy(portOpts.ifr_name,portName);
+	strncpy(portOpts.ifr_name,portName,MAX_ETH_PORT_NAME_LEN);
 
 	/* Get the port details using the ioctl interface */
         if (0 > ioctl(EthPortInfoTable[EthPortCount].ethPortSocketFd,
@@ -454,7 +456,7 @@ int EthPortOpen(const char *portName)
 	VerboseStringPrint("Interface Index of '%s' is %d", portName,
 		EthPortInfoTable[EthPortCount].ifIndex);
 	/* Set interface to promiscuous mode */
-	strcpy(portOpts.ifr_name, portName);
+	strncpy(portOpts.ifr_name,portName,MAX_ETH_PORT_NAME_LEN);
 	if (0 > ioctl(EthPortInfoTable[EthPortCount].ethPortSocketFd,
 			SIOCGIFFLAGS, &portOpts))
 	{
@@ -514,7 +516,7 @@ int EthPortOpen(const char *portName)
 	//Open Message queue for communcation between reciever thread and ethportread/receive
 	//First open the receive FD from which teh packets are dequeued from MQ
 	sprintf(mqName,"/mq.%s.%d",portName,getpid());
-	strcpy(EthPortInfoTable[EthPortCount].mqName,mqName);
+	strncpy(EthPortInfoTable[EthPortCount].mqName,mqName,MAX_FILE_NAME_LEN);
 
 	EthPortInfoTable[EthPortCount].mqRcvFd =
 		mq_open(mqName, O_CREAT | O_RDONLY, 0644, NULL);
@@ -724,8 +726,8 @@ EDPAT_RETVAL EthPortReceiveAny(char *portName, unsigned char *data, int *dataLen
 		switch(retVal)
 		{
 			case EDPAT_SUCCESS:
-				strcpy(portName,
-					EthPortInfoTable[portIdx].portName);
+				strncpy(portName,
+					EthPortInfoTable[portIdx].portName,MAX_ETH_PORT_NAME_LEN);
 				VerboseStringPrint(
 					"Packet of length %d "
 					"received at port '%s'",

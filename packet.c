@@ -109,7 +109,8 @@ void CheckUnexpectedPackets(void)
  *
  * ********************/
 
-static EDPAT_RETVAL packetRead(const char *in)
+char *XXX;
+static EDPAT_RETVAL packetRead(char *in)
 {
 	static char statement[MAX_SCRIPT_STATEMENT_LEN];
 	char *token, *q;
@@ -132,7 +133,7 @@ static EDPAT_RETVAL packetRead(const char *in)
 		
 	}
 
-	strcpy(statement,&in[1]);	// Skip the 1st character Which will be operation 
+	strncpy(statement,&in[1],MAX_SCRIPT_STATEMENT_LEN);	// Skip the 1st character Which will be operation 
 	//Copy the ethport name
 	token = strtok(statement," ");
         if (NULL == token)
@@ -150,13 +151,13 @@ static EDPAT_RETVAL packetRead(const char *in)
 		return EDPAT_FAILED;
 	}
 
-	strcpy(EthPortName,token);
+	strncpy(EthPortName,token,MAX_ETH_PORT_NAME_LEN);
 	/* Open the port if not already open */
 	retVal = EthPortOpen(EthPortName);
 	if ( 0 >  retVal)
 		return EDPAT_FAILED;
 
-	strcpy(statement,&in[1]);
+	strncpy(statement,&in[1],MAX_SCRIPT_STATEMENT_LEN);
 	token = strtok(statement," ");
 
 	BytesInSpecifiedPkt = 0;
@@ -214,7 +215,7 @@ static EDPAT_RETVAL packetRead(const char *in)
 				SpecifiedPktMask[BytesInSpecifiedPkt] = byte;
 				break;
 			default:
-				//Default just copy the byte in 
+				//Default just copy the byte in
 				byte = (unsigned char ) strtol(token,&q,16);
 				if ( token == q)
 				{
@@ -439,7 +440,7 @@ static EDPAT_RETVAL packetReceive(void)
  *
  *************************/
 
-EDPAT_RETVAL PacketProcess(const char *in)
+EDPAT_RETVAL PacketProcess(char *in)
 {
 	EDPAT_RETVAL retVal;
 

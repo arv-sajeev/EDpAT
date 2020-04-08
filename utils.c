@@ -36,7 +36,7 @@ void TrimStr(char *str)
         char tmp[MAX_SCRIPT_STATEMENT_LEN];
         int len, i;
 
-        strcpy(tmp,str);
+        strncpy(tmp,str,MAX_SCRIPT_STATEMENT_LEN);
 
         len = strlen(tmp);
 
@@ -55,7 +55,7 @@ void TrimStr(char *str)
                 }
         };
 
-        strcpy(str,&tmp[i]);
+        strncpy(str,&tmp[i],MAX_SCRIPT_STATEMENT_LEN);
         return;
 }
 

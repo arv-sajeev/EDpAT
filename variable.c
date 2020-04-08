@@ -54,7 +54,7 @@ EDPAT_RETVAL VariableStoreValue(const char *testScriptStatement)
         int i;
 
 	/* check syntax and seperate variable name and its value from statment */
-        strcpy(tmp,&testScriptStatement[1]);
+        strncpy(tmp,&testScriptStatement[1],MAX_SCRIPT_STATEMENT_LEN);
         varName = tmp;
         varValue = strchr(tmp,'=');
         if (NULL == varValue)
@@ -83,7 +83,7 @@ EDPAT_RETVAL VariableStoreValue(const char *testScriptStatement)
                                 varValue);
                         free(VarList[i].varValue);
                         VarList[i].varValue = malloc(strlen(varValue));
-                        strcpy(VarList[i].varValue,varValue);
+                        strncpy(VarList[i].varValue,varValue,MAX_SCRIPT_LINE_LEN);
                         return EDPAT_SUCCESS;
                 }
         }
@@ -98,8 +98,8 @@ EDPAT_RETVAL VariableStoreValue(const char *testScriptStatement)
 	}
         VarList[NextFreeVarListIndex].varName = malloc(strlen(varName));
         VarList[NextFreeVarListIndex].varValue = malloc(strlen(varValue));
-        strcpy(VarList[NextFreeVarListIndex].varName,varName);
-        strcpy(VarList[NextFreeVarListIndex].varValue,varValue);
+        strncpy(VarList[NextFreeVarListIndex].varName,varName,MAX_FILE_NAME_LEN);
+        strncpy(VarList[NextFreeVarListIndex].varValue,varValue,MAX_SCRIPT_LINE_LEN);
         NextFreeVarListIndex++;
 	VerboseStringPrint("Variable '%s' with value '%s' added.",
 			varName,varValue);
@@ -147,7 +147,7 @@ void VariablePrintValues(void)
 	static char msg[MAX_SCRIPT_STATEMENT_LEN];
 	static char var[MAX_SCRIPT_LINE_LEN];
 
-	strcpy(msg,"Variables Stored:");
+	strncpy(msg,"Variables Stored:",MAX_SCRIPT_STATEMENT_LEN);
 
 	for(i=0; i < NextFreeVarListIndex; i++)
 	{
@@ -161,7 +161,7 @@ void VariablePrintValues(void)
 		else
 		{
 			VerboseStringPrint(msg);
-			strcpy(msg,"Variables Stored(Next set):");
+			strncpy(msg,"Variables Stored(Next set):",MAX_SCRIPT_LINE_LEN);
 		}
 	}
 	VerboseStringPrint(msg);

@@ -85,9 +85,9 @@ static void msgPrint(FILE *fp, const char *msg)
 	EDPAT_BOOL firstLineFlag = EDPAT_TRUE;
         static char buf[MAX_CHAR_PER_LINE+1];
 	static char lMsg[MAX_MSG_LEN];
-	char *linePregix = "## ";
+	char *linePrefix = "## ";
 
-	strcpy(lMsg,msg);
+	strncpy(lMsg,msg,MAX_MSG_LEN);
 	char *pMsg;
 
 	pMsg = strtok(lMsg,"\n");
@@ -96,7 +96,7 @@ static void msgPrint(FILE *fp, const char *msg)
         	msgLen = strlen(pMsg);
 		if (fp == LogFp)
 		{
-			strcpy(buf,linePregix);
+			strncpy(buf,linePrefix,MAX_MSG_LEN);
 		}
 		else
 		{
@@ -106,7 +106,7 @@ static void msgPrint(FILE *fp, const char *msg)
 			}
 			else
 			{
-				strcpy(buf,"ERROR:");
+				strncpy(buf,"ERROR:",MAX_MSG_LEN);
 			}
 		}
 		if ( EDPAT_TRUE == TimestampEnableFlag)
@@ -137,7 +137,7 @@ static void msgPrint(FILE *fp, const char *msg)
 			i = i + lineLen;
 			lineLen = (MAX_CHAR_PER_LINE-3);
 		}
-		linePregix = "   ";
+		linePrefix = "   ";
 		pMsg = strtok(NULL,"\n");
         }
         return;
@@ -337,7 +337,7 @@ void ScriptErrorMsgPrint( const char *format, ...)
 	int i;
 	va_list ap;
 
-	strcpy(Msg,"Script Error: ");
+	strncpy(Msg,"Script Error: ",MAX_MSG_LEN);
 	// construct error string from veriable argumnets
 	va_start (ap, format);
 	vsnprintf (&Msg[14], MAX_MSG_LEN, format, ap);

@@ -169,7 +169,7 @@ FILE *ScriptOpen(const char *fileName)
 	
 	// Include the file in the scriptfileinfo table by adding its name and line no
 	ScriptFileDepth++;
-	strcpy(ScriptFileInfoTable[ScriptFileDepth].fileName,fileName);
+	strncpy(ScriptFileInfoTable[ScriptFileDepth].fileName,fileName,MAX_FILE_NAME_LEN);
 	ScriptFileInfoTable[ScriptFileDepth].lineNo=0;
 
 	VerboseStringPrint("Opened script '%s' with Fp=%p",fileName,fp);
@@ -219,7 +219,7 @@ EDPAT_RETVAL ScriptIncludeFile(const char *in)
         int retVal;
 	char *p = line;
 
-	strcpy(line,&in[1]); // Skip 1st character '#' and copy the rest to line
+	strncpy(line,&in[1],MAX_SCRIPT_LINE_LEN); // Skip 1st character '#' and copy the rest to line
         includeFileName = strtok(p," ");	//Find include filename
 
 	// Error handle
@@ -351,7 +351,7 @@ int  ScriptSubstituteVariables(char *iline)
 	strcat(oline,inPtr);
 	if (0 !=  substituteCount)
 	{
-		strcpy(iline,oline);
+		strncpy(iline,oline,MAX_SCRIPT_LINE_LEN);
 		retVal = ScriptSubstituteVariables(iline);
 		if (0 > retVal) return -1;
 	}
