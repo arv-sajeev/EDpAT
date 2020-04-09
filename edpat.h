@@ -23,6 +23,7 @@ NO EXPRESS OR IMPLIED LICENSES TO ANY PARTY'S PATENT RIGHTS ARE GRANTED BY THIS 
 #define MAX_TESTCASE_ID_LEN	11
 #define MAX_TIMESTAMP_LEN        40
 #define MAX_VAR_COUNT		100
+#define MAX_CS_SIZE		10
 #define LICENSE_PROMPT "Copyright (c) 2020-1025 Arvind Sajeev (arvind.sajeev@gmail.com)\nAll rights reserved\n\n"
 // timeout period while wating from reading pkt from interface.
 #define PKT_RECEIVE_TIMEOUT	3	

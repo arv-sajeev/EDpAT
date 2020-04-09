@@ -24,14 +24,6 @@ NO EXPRESS OR IMPLIED LICENSES TO ANY PARTY'S PATENT RIGHTS ARE GRANTED BY THIS 
 #include "print.h"
 #include "EthPortIO.h"
 
-typedef enum { OP_UNKNOWN, OP_SEND, OP_RECEIVE } OPERATION;
-
-static OPERATION Operation = OP_UNKNOWN;
-static char EthPortName[MAX_ETH_PORT_NAME_LEN];
-static int	BytesInSpecifiedPkt;
-static int	BytesInRecvPkt;
-static unsigned char RecvPkt[MAX_PKT_SIZE];
-static unsigned char SpecifiedPkt[MAX_PKT_SIZE];
 
 /* packets to be send or expected to be receved are specifed in hex
    in the input script. This will be converted to binary and stored 
@@ -48,15 +40,35 @@ static unsigned char SpecifiedPkt[MAX_PKT_SIZE];
 	  '*' is not valid for send packet.
 	- if '?' is specifed, it need to be followed by a number K (e.g. ?32)
  	  which indicate that this byte needs to be replaced with Kth byte
-	  of previously recevied packet. Hence zero will be stored in
+	  of previously received packet. Hence zero will be stored in
 	  SpecifiedPkt[i] and K is stored in SpecifiedPktMask[i].
 	  '?' is not valid while specifing expected packet.
 */
 
+
+typedef enum { OP_UNKNOWN, OP_SEND, OP_RECEIVE } OPERATION;
+
+static OPERATION Operation = OP_UNKNOWN;
+static char EthPortName[MAX_ETH_PORT_NAME_LEN];
+static int	BytesInSpecifiedPkt;
+static int	BytesInRecvPkt;
+static int 	cs_array_siz;
+static unsigned char RecvPkt[MAX_PKT_SIZE];
+static unsigned char SpecifiedPkt[MAX_PKT_SIZE];
+
+
+struct check_sum_mask	{
+	unsigned int pos;
+	unsigned int start;
+	unsigned int end;
+};
+
+struct check_sum_mask cs_arr[MAX_CS_SIZE];
 signed short SpecifiedPktMask[MAX_PKT_SIZE];
+
 #define	MASK_EXACT	(-1)
 #define	MASK_SKIP	(-2)
-
+#define MASK_CS  	(-3)
 
 
 /******************
@@ -109,7 +121,6 @@ void CheckUnexpectedPackets(void)
  *
  * ********************/
 
-char *XXX;
 static EDPAT_RETVAL packetRead(char *in)
 {
 	static char statement[MAX_SCRIPT_STATEMENT_LEN];
@@ -161,10 +172,48 @@ static EDPAT_RETVAL packetRead(char *in)
 	token = strtok(statement," ");
 
 	BytesInSpecifiedPkt = 0;
+	cs_array_siz = 0;
 	while ((token = strtok(NULL," ")) != NULL)
 	{
 		switch(token[0])
-		{
+		{	
+			case '&':	// In case checksum field 
+					if (OP_SEND == Operation){
+						char *n1,*n2;
+						n1 = token+1;
+						n2 = strchr(token,'-');
+						if (n2 == NULL)	{
+							ScriptErrorMsgPrint("Expecting Checksum format"
+									"&header_start-header_end");
+						}
+						n2[0] = 0;
+						n2++;
+						int hs = strtol(n1,&q,10);
+						if (n1 ==  q){
+							ScriptErrorMsgPrint(
+							"'%s' is not an integer value",n1);
+						}
+						int he =  strtol(n2,&q,10);
+						if (n2 == q){
+							ScriptErrorMsgPrint(
+							"'%s' is not an integer value",n2);
+						}
+						cs_arr[cs_array_siz].pos = BytesInSpecifiedPkt;
+						cs_arr[cs_array_siz].start = hs;
+						cs_arr[cs_array_siz].end = he;
+
+						cs_array_siz++;
+
+						SpecifiedPktMask[BytesInSpecifiedPkt] = MASK_CS;
+						SpecifiedPkt[BytesInSpecifiedPkt++] = 0;
+						SpecifiedPkt[BytesInSpecifiedPkt] = 0;
+						SpecifiedPktMask[BytesInSpecifiedPkt] = MASK_CS;
+
+						break;
+					}
+					VerboseStringPrint("Falling thorugh to the case '*', In receive mode we are not evaluating checksum");
+					
+
 			case '*':	// Do not compare
 				if (OP_RECEIVE != Operation)
 				{
@@ -177,6 +226,8 @@ static EDPAT_RETVAL packetRead(char *in)
 				SpecifiedPkt[BytesInSpecifiedPkt]  = 0;
 				SpecifiedPktMask[BytesInSpecifiedPkt] = MASK_SKIP;
 				break;
+
+
 			case '?':	// copy from last received packet
 				if (OP_SEND != Operation)
 				{
@@ -257,6 +308,33 @@ static EDPAT_RETVAL packetRead(char *in)
 	return EDPAT_SUCCESS;
 }
 
+
+static short int check_sum(unsigned char *pkt,unsigned int start,unsigned int end)	{
+	unsigned char *addr = pkt +start;
+	if (start > end)	{
+		ScriptErrorMsgPrint("start and end of header invalid");
+		return EDPAT_FAILED;
+	}
+
+	unsigned int size = end - start;
+	unsigned int csum = 0;
+	// Add each word in the header (16 bit addition) 
+	for (int i = 0;i <= size;i += 2)	{
+		// Making it 16 byte addition 
+		csum += (addr[i] << 8) + addr[i+1]; 
+	}
+
+	// get rid of carry by folding 
+	
+	while (csum >> 16)	{
+		csum = (csum & 0xFFFF) + (csum>>16);
+	}
+
+	unsigned short int ret = ~csum;
+	VerboseStringPrint("Calculate CheckSum and got :: %x",ret);
+	return ret;
+}
+
 /*****************************
  *
  *	packetSend
@@ -285,6 +363,10 @@ static EDPAT_RETVAL packetSend(void)
 			pkt[pktLen] = SpecifiedPkt[pktLen];
 		}
 		//Special character usage 
+		
+
+		// For the case that the field is checksum 
+
 		else
 		{
 			// In ? <n> case mask is greater than 0 and represents postion in previous received packet
@@ -306,12 +388,33 @@ static EDPAT_RETVAL packetSend(void)
 				}
 
 			}
-			else
+
+
+			else if (SpecifiedPktMask[pktLen] == MASK_CS){
+				VerboseStringPrint("Encountered Checksum at %d",pktLen);
+				continue;
+			}
+
+			else 
 			{
 				ScriptErrorMsgPrint("Unsupported mask");
 				return EDPAT_FAILED;
 			}
 		}
+	}
+
+	// Now that the full packet is formed compute check sum and fill in various positions
+	for (int i = 0;i < cs_array_siz;i++){
+		VerboseStringPrint("Found checksum at %d",cs_arr[i].pos);
+		VerboseStringPrint("For %d",cs_arr[i].start,cs_arr[i].end);
+	}
+
+	for (int i = 0;i < cs_array_siz;i++){
+		short int cs = check_sum(pkt,cs_arr[i].start,cs_arr[i].end);
+		char byte1 = (char)((cs >> 8) & 0xFF00);
+		char byte2 = (char)(cs & 0x00FF);
+		pkt[cs_arr[i].pos] 	= byte1;
+		pkt[cs_arr[i].pos + 1] 	= byte2;
 	}
 
 	//  Send the packet
