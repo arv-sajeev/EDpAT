@@ -31,8 +31,11 @@ MAC Destination address | MAC Source address | Ethertype (length in IEEE 802.3) 
 ## 1. ARP
 1. The file `arp.txt` in `sample_tests` can be run using `sudo ./edpat.exe ./sample_tests/arp.txt`. 
 1. Set the required values in header.txt to send an ARP request packet to your default gateway and check whether you are receiving the required response which is an ARP Reply with the MAC address of the requested IP
-1. Use the following link as reference to make custom [ARP payload](http://www.tcpipguide.com/free/t_ARPMessageFormat.htm)
+1.  Refer [ARP payload](https://tools.ietf.org/html/rfc6747) to make custom packets.
 
-
+## 2. ICMP
+1. The file `icmp.txt` in `sample_tests` contains a sample ICMP echo request testscript
+1. Notice that the checksum calculation functionality has been used here for the IP and ICMP header
+1. Refer [ICMP payload](https://tools.ietf.org/html/rfc6747) to make custom packets
 
  
