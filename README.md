@@ -44,7 +44,8 @@ Parameter | Description
   ## Packet specification 
   * The packets are specified byte by byte in hexadecimal format, they can be assigned to variables as shown above and then used in packet specifications
   * The `*` character can be used as as a wildcard in the receive specification, if * is is specified that byte will not be compared
-  * `? <n>` can be used while specifying send packet specification to copy a specified byte from the packet just previously received
+  * `? <n>` is to be used while specifying send packet specification to copy a specified byte from the packet just previously received
+  * `&<n1>-<n2>` is to be used to specify that that word is to be filled with the checksum calculated for the bytes from position n1 to n2 of the packet
   
 # 5. Limitations
    * The application only supports IPv4 network now
