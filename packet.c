@@ -308,6 +308,20 @@ static EDPAT_RETVAL packetRead(char *in)
 	return EDPAT_SUCCESS;
 }
 
+/**************************
+ *
+ * 	check_sum
+ *
+ * 	Used to calculate the IP checksum for bytes specified.
+ * 	1's complement addition of 16 bit words
+ *
+ * 	Arguments	:	pkt	-	pointer to packet buffer
+ * 				start	-	starting position of header
+ * 				end	-	end position of header
+ *
+ * 	Return		:	16 bit check sum value
+ *
+ ***************************/
 
 static short int check_sum(unsigned char *pkt,unsigned int start,unsigned int end)	{
 	unsigned char *addr = pkt +start;
@@ -315,15 +329,18 @@ static short int check_sum(unsigned char *pkt,unsigned int start,unsigned int en
 		ScriptErrorMsgPrint("start and end of header invalid");
 		return EDPAT_FAILED;
 	}
-
 	unsigned int size = end - start;
 	unsigned int csum = 0;
-	// Add each word in the header (16 bit addition) 
-	for (int i = 0;i <= size;i += 2)	{
+	unsigned int i = 0;
+	// Add each word in the header (16 bit addition
+	for (;i <= size;i += 2)	{
 		// Making it 16 byte addition 
 		csum += (addr[i] << 8) + addr[i+1]; 
 	}
-
+	//In the case that there are odd number of packets pad with zero byte
+	if (size % 2 == 0)	{	
+		csum += (addr[i]<<8) + 0x00;
+	}
 	// get rid of carry by folding 
 	
 	while (csum >> 16)	{
@@ -331,7 +348,7 @@ static short int check_sum(unsigned char *pkt,unsigned int start,unsigned int en
 	}
 
 	unsigned short int ret = ~csum;
-	VerboseStringPrint("Calculate CheckSum and got :: %x",ret);
+	VerboseStringPrint("Calculated CheckSum for bytes [%d-%d] and got :: %x",start,end,ret);
 	return ret;
 }
 
@@ -411,7 +428,7 @@ static EDPAT_RETVAL packetSend(void)
 
 	for (int i = 0;i < cs_array_siz;i++){
 		short int cs = check_sum(pkt,cs_arr[i].start,cs_arr[i].end);
-		char byte1 = (char)((cs >> 8) & 0xFF00);
+		char byte1 = (char)((cs >> 8) & 0x00FF);
 		char byte2 = (char)(cs & 0x00FF);
 		pkt[cs_arr[i].pos] 	= byte1;
 		pkt[cs_arr[i].pos + 1] 	= byte2;
@@ -520,7 +537,7 @@ static EDPAT_RETVAL packetReceive(void)
 		TestCaseStringPrint("Expected packet. Len=%d",
 			BytesInSpecifiedPkt);
 		TestCasePacketPrint(SpecifiedPkt, BytesInSpecifiedPkt);
-		TestCaseStringPrint("Actual packet recevied. Len=%d",
+		TestCaseStringPrint("Actual packet received. Len=%d",
 			BytesInRecvPkt);
 		TestCasePacketPrint(RecvPkt,BytesInRecvPkt);
 		return EDPAT_SUCCESS;
