@@ -1,13 +1,9 @@
-/*
+/* SPDX-License-Identifier: BSD-3-Clause-Clear
+ * https://spdx.org/licenses/BSD-3-Clause-Clear.html#licenseText
+ * 
  * Copyright (c) 2020-1025 Arvind Sajeev (arvind.sajeev@gmail.com)
-All rights reserved.
-
-Redistribution and use in source and binary forms, with or without modification, are permitted (subject to the limitations in the disclaimer below) provided that the following conditions are met:
-
-Redistributions of source code must retain the above copyright notice, this list of conditions and the following disclaimer.
-Redistributions in binary form must reproduce the above copyright notice, this list of conditions and the following disclaimer in the documentation and/or other materials provided with the distribution. Neither the name of Arvind Sajeev nor the names of its contributors may be used to endorse or promote products derived from this software without specific prior written permission.
-NO EXPRESS OR IMPLIED LICENSES TO ANY PARTY'S PATENT RIGHTS ARE GRANTED BY THIS LICENSE. THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-*/
+ * All rights reserved.
+ */
 
 
 #include <stdio.h>
@@ -37,8 +33,8 @@ NO EXPRESS OR IMPLIED LICENSES TO ANY PARTY'S PATENT RIGHTS ARE GRANTED BY THIS 
 #define MAC_ADDR_LEN	6
 
 typedef struct {
-	char		portName[MAX_ETH_PORT_NAME_LEN];
-	char		mqName[MAX_FILE_NAME_LEN];
+	char		portName[MAX_ETH_PORT_NAME_LEN+1];
+	char		mqName[MAX_FILE_NAME_LEN+1];
 	unsigned char	macAddr[MAC_ADDR_LEN];
 	int		ethPortSocketFd;
 	int		ifIndex;
@@ -48,7 +44,6 @@ typedef struct {
 } ETH_PORT_INFO;
 
 static ETH_PORT_INFO EthPortInfoTable[MAX_ETH_PORT_COUNT];
-//ETH_PORT_INFO EthPortInfoTable[MAX_ETH_PORT_COUNT];
 static int EthPortCount = 0;
 static EDPAT_BOOL ArrayInitFlag = EDPAT_FALSE;
 static int MqMsgSize = 0;
@@ -60,9 +55,9 @@ static int MqMsgSize = 0;
  *
  *   Get array index of the table for the given EthPort Name
  *
- *   Arguments 		: 	portName	- name of port whose index is to be found
+ *   Arguments 		: portName - name of port whose index is to be found
  *			
- *   Return		:	if >= 0 Array index or EDPAT_NOTFOUND
+ *   Return		:if >= 0 Array index or EDPAT_NOTFOUND
  *
  ********/
 static EDPAT_RETVAL ethPortIdxFindByName(const char *portName)
@@ -103,7 +98,7 @@ static void ethPortClose(ETH_PORT_INFO *p)
 	{
 		close(p->ethPortSocketFd);
 		p->ethPortSocketFd = (-1);
-		VerboseStringPrint("Ethernet Port '%s' closed", p->portName);
+		VerboseStringPrint("Ethernet Port '%s' closed",p->portName);
 	}
 	if ( 0 <= p->mqRcvFd)
 	{
@@ -167,7 +162,7 @@ static EDPAT_BOOL isPacketToBeFiltered(unsigned char *pkt,int pktLen)
 			{
 			   case 0x02:	// IGMP
 				VerboseStringPrint(
-					    "Received IGMP packet filtered");
+				    "Received IGMP packet filtered");
 				return EDPAT_TRUE;
 			   case 0x11:	// UDP
 				srcPort = ((pkt[34] << 8) | pkt[35]);	
@@ -275,8 +270,10 @@ static void *ReceiverPthreadFunc(void *vargp)
 			VerboseStringPrint("Empty packet receieved");
 			continue;
 		}
-		// If Promiscuous drop packets not addressed to the MAC of the ethernet port
-		if ((PromiscuousModeEnabled) && 0 != memcmp(pkt,p->macAddr,MAC_ADDR_LEN) )
+		/* If Promiscuous drop packets not addressed to the MAC 
+		   of the ethernet port */
+		if (	(PromiscuousModeEnabled) && 
+			(0 != memcmp(pkt,p->macAddr,MAC_ADDR_LEN)) )
 		{
 			VerboseStringPrint("Packet not addressed to '%s' "
 						"is discarded",p->portName);
@@ -289,7 +286,6 @@ static void *ReceiverPthreadFunc(void *vargp)
 		if (EDPAT_TRUE == retVal)
 		{
 			// discard the packt as it needs to be fintered.
-
 			continue;
 		}
 		
@@ -355,7 +351,8 @@ int EthPortOpen(const char *portName)
 			EthPortInfoTable[portIdx].pThread = -1;
 		}
 		ArrayInitFlag = EDPAT_TRUE;
-		VerboseStringPrint("Initialized Ethernet port data structures");
+		VerboseStringPrint(
+			"Initialized Ethernet port data structures");
 	}
 
 	VerboseStringPrint("Opening Ethernet port '%s'",portName);
@@ -369,7 +366,10 @@ int EthPortOpen(const char *portName)
 		return portIdx;
 	}
 	// Save name
-	strncpy(EthPortInfoTable[EthPortCount].portName,portName,MAX_ETH_PORT_NAME_LEN);
+	strncpy(EthPortInfoTable[EthPortCount].portName,
+			portName,MAX_ETH_PORT_NAME_LEN);
+	EthPortInfoTable[EthPortCount].portName[MAX_ETH_PORT_NAME_LEN]=0;
+
 	// Stoer socketfd
 	EthPortInfoTable[EthPortCount].ethPortSocketFd =
 			socket(AF_PACKET,SOCK_RAW,htons(ETH_P_ALL));
@@ -398,7 +398,8 @@ int EthPortOpen(const char *portName)
 		ethPortClose(&EthPortInfoTable[EthPortCount]);
 		return -1;
 	}
-	strncpy(portOpts.ifr_name,portName,MAX_ETH_PORT_NAME_LEN);
+	strncpy(portOpts.ifr_name,portName,sizeof(portOpts.ifr_name));
+	portOpts.ifr_name[sizeof(portOpts.ifr_name)-1] = 0;
 
 	/* Get the port details using the ioctl interface */
         if (0 > ioctl(EthPortInfoTable[EthPortCount].ethPortSocketFd,
@@ -456,7 +457,8 @@ int EthPortOpen(const char *portName)
 	VerboseStringPrint("Interface Index of '%s' is %d", portName,
 		EthPortInfoTable[EthPortCount].ifIndex);
 	/* Set interface to promiscuous mode */
-	strncpy(portOpts.ifr_name,portName,MAX_ETH_PORT_NAME_LEN);
+	strncpy(portOpts.ifr_name,portName,sizeof(portOpts.ifr_name));
+	portOpts.ifr_name[sizeof(portOpts.ifr_name)-1] = 0;
 	if (0 > ioctl(EthPortInfoTable[EthPortCount].ethPortSocketFd,
 			SIOCGIFFLAGS, &portOpts))
 	{
@@ -490,7 +492,8 @@ int EthPortOpen(const char *portName)
 	/* Allow the socket to be reused,
 	   incase connection is closed prematurely */
 	if (0 > setsockopt(EthPortInfoTable[EthPortCount].ethPortSocketFd,
-			SOL_SOCKET, SO_REUSEADDR, &socketOpt, sizeof socketOpt))
+			SOL_SOCKET, SO_REUSEADDR,
+			&socketOpt, sizeof socketOpt))
 	{
 		ExecErrorMsgPrint("setsockopt(SO_REUSEADDR) failed for "
 			"Eth Port '%s'",portName);
@@ -504,7 +507,8 @@ int EthPortOpen(const char *portName)
 		SOL_SOCKET,
                 SO_BINDTODEVICE, portName, IFNAMSIZ-1))
         {
-		ScriptErrorMsgPrint("Ethernet Port name '%s' does not exists",
+		ScriptErrorMsgPrint(
+			"Ethernet Port name '%s' does not exists",
 			portName);
 		ethPortClose(&EthPortInfoTable[EthPortCount]);
 		return -1;
@@ -513,10 +517,14 @@ int EthPortOpen(const char *portName)
 	VerboseStringPrint("Socket binding successful for '%s'",portName);
 
 
-	//Open Message queue for communcation between reciever thread and ethportread/receive
-	//First open the receive FD from which teh packets are dequeued from MQ
+	/* Open Message queue for communcation between reciever thread and
+	   ethportread/receive
+	   First open the receive FD from which teh packets are dequeued
+	   from MQ */
 	sprintf(mqName,"/mq.%s.%d",portName,getpid());
-	strncpy(EthPortInfoTable[EthPortCount].mqName,mqName,MAX_FILE_NAME_LEN);
+	strncpy(EthPortInfoTable[EthPortCount].mqName,
+			mqName,MAX_FILE_NAME_LEN);
+	EthPortInfoTable[EthPortCount].mqName[MAX_FILE_NAME_LEN]=0;
 
 	EthPortInfoTable[EthPortCount].mqRcvFd =
 		mq_open(mqName, O_CREAT | O_RDONLY, 0644, NULL);
@@ -547,7 +555,8 @@ int EthPortOpen(const char *portName)
 		VerboseStringPrint("Mq msgsize is detected as  %d",MqMsgSize);
 	}
 
-	// Open the send FD thoruggh which the receiver thread loads packes to the MQ
+	/* Open the send FD thoruggh which the receiver thread loads
+		packes to the MQ */
 	EthPortInfoTable[EthPortCount].mqSendFd =
 			mq_open(mqName, O_WRONLY|O_NONBLOCK);
 	if ( 0 > EthPortInfoTable[EthPortCount].mqSendFd)
@@ -607,7 +616,8 @@ EDPAT_RETVAL EthPortCloseAll(void)
 /***********************
  *   ethPortRead()
  *
- *   Read a packet from the MQ associated to the Ethport that the receiver thread had filled
+ *   Read a packet from the MQ associated to the Ethport that the receiver
+ *   thread had filled
  *
  *   Arguments : 
  *	SocketFd	- INPUT. Index to the portInfo table from where
@@ -616,7 +626,8 @@ EDPAT_RETVAL EthPortCloseAll(void)
  *			  need to be stored. The receved packet is returned
  *			  to the coller in this buffer.
  *	dataLen		- INPUT/OUTPUT. caller specify the size of'data'
- *			  the function will retirn the size of packet returned
+ *			  the function will retirn the size of packet
+ *			  returned
  *	waitTime	- INPUT. How long to wait for packet befor timeout.
  *			  specified in seconds.
  *
@@ -624,7 +635,7 @@ EDPAT_RETVAL EthPortCloseAll(void)
  *
  ***********************/
 static EDPAT_RETVAL ethPortRead( const int SocketFd,
-			unsigned char *data, int *dataLen, const int waitTime)
+		unsigned char *data, int *dataLen, const int waitTime)
 {
 	struct timespec readTime;
 	int 	rcvDataLen;
@@ -664,14 +675,16 @@ static EDPAT_RETVAL ethPortRead( const int SocketFd,
  *
  * 	Read the packets in the MQ and load it into data
  *
- * 	Arguments	:	portName	-	Name of the port to receive packets form 
- * 				data		- 	the data that is read from the mq is filled here
- * 				datalen		- 	Length of data filled
- * 	Return 		: 	EDPAT_RETVAL
+ * 	Arguments: portName -	Name of the port to receive packets form 
+ * 		   data	    -	the data that is read from the mq is
+				filled here
+ * 		   datalen  -	Length of data filled
+ * 	Return 		: EDPAT_RETVAL
  *
  * ***************************/
 
-EDPAT_RETVAL EthPortReceive(const char *portName, unsigned char *data, int *dataLen)
+EDPAT_RETVAL EthPortReceive(const char *portName,
+			unsigned char *data, int *dataLen)
 {
 	int portIdx;
 	EDPAT_RETVAL retVal;
@@ -704,17 +717,22 @@ EDPAT_RETVAL EthPortReceive(const char *portName, unsigned char *data, int *data
  *
  *	EthPortReceiveAny
  *
- *	Read from all the ports we have stored in EthPortInfoTable, this is used to find if even one extra unwanted packet is in the queue 
+ *	Read from all the ports we have stored in EthPortInfoTable,
+ *	this is used to find if even one extra unwanted packet is in the
+ *	queue 
  *	
- *	Arguments	: 	portname	-	it is used to writeback the portname that received data
- *				data		- 	it is used to vriteback the data received
- *				datalen		-	it is used to writeback the datalen of dat received
+ *	Arguments: 	portname - it is used to writeback the portname
+ *				   that received data
+ *			data	 - it is used to vriteback the data received
+ *			datalen	 - it is used to writeback the datalen of
+ *				   dat received
  *
  *	Return 		: 	EDPAT_RETVAL
  *
  ******************************/
 
-EDPAT_RETVAL EthPortReceiveAny(char *portName, unsigned char *data, int *dataLen)
+EDPAT_RETVAL EthPortReceiveAny(char *portName,
+			unsigned char *data, int *dataLen)
 {
 	int portIdx;
 	EDPAT_RETVAL retVal;
@@ -727,7 +745,9 @@ EDPAT_RETVAL EthPortReceiveAny(char *portName, unsigned char *data, int *dataLen
 		{
 			case EDPAT_SUCCESS:
 				strncpy(portName,
-					EthPortInfoTable[portIdx].portName,MAX_ETH_PORT_NAME_LEN);
+					EthPortInfoTable[portIdx].portName,
+					MAX_ETH_PORT_NAME_LEN);
+	EthPortInfoTable[portIdx].portName[MAX_ETH_PORT_NAME_LEN]=0;
 				VerboseStringPrint(
 					"Packet of length %d "
 					"received at port '%s'",
@@ -750,16 +770,18 @@ EDPAT_RETVAL EthPortReceiveAny(char *portName, unsigned char *data, int *dataLen
  *
  *	Used to send data to the specified port
  *
- *	Arguments	:	portName	-	the name of the port for packets to be send to 
- *				data		-	the data to be sent to the port
- *				dataLen		-	the length of data to be sent
+ *	Arguments:	portName - the name of the port for packets to
+ *				   be send to 
+ *			data	 - the data to be sent to the port
+ *			dataLen	 - the length of data to be sent
  *
- *	return 		: 	EDPAT_RETVAL
+ *	return: 	EDPAT_RETVAL
  *
  *
  *************************/
 
-EDPAT_RETVAL EthPortSend(const char *portName, unsigned char *data, const int dataLen)
+EDPAT_RETVAL EthPortSend(const char *portName,
+			unsigned char *data, const int dataLen)
 {
 	struct sockaddr_ll addr={0};
 	EDPAT_RETVAL retVal;
@@ -799,7 +821,8 @@ EDPAT_RETVAL EthPortSend(const char *portName, unsigned char *data, const int da
 		return EDPAT_FAILED;
 	}
 
-	VerboseStringPrint("Packet of length %d send successfuly at port '%s'",
+	VerboseStringPrint(
+			"Packet of length %d send successfuly at port '%s'",
 			dataLen,portName);
 	VerbosePacketHeaderPrint(data);
 	VerbosePacketPrint(data,dataLen);
@@ -809,7 +832,8 @@ EDPAT_RETVAL EthPortSend(const char *portName, unsigned char *data, const int da
 /****************************
  * 	EthPortClearBuf
  *
- * 	This is used to cleanup the memory queue after the testcases have been run
+ * 	This is used to cleanup the memory queue after the testcases have
+ *	been run
  * 	
  * 	Arguments	:	void
  * 	Return		: 	void
@@ -818,7 +842,7 @@ EDPAT_RETVAL EthPortSend(const char *portName, unsigned char *data, const int da
 EDPAT_RETVAL EthPortClearBuf(void)
 {
 	unsigned char pkt[MAX_PKT_SIZE];
-	char portName[MAX_ETH_PORT_NAME_LEN];
+	char portName[MAX_ETH_PORT_NAME_LEN+1];
 	int pktLen;
 	EDPAT_RETVAL retVal;
 	// Keep doing receive any as long as there are packets in the queue

@@ -1,7 +1,9 @@
 # 1. EDpAT
-EDpAT stands for Ethernet Dataplane Application Tester. It is a test tool to test ethernet based data plane applications. It can send and receive raw Ethernet packets to one or more ethernet ports. 
-
-The packets to be sent/received are specified in an input script file in the desired order.The tool will read this file as input and send/receive the packets as specified in the file. The received packets are compared against what is specified in the script file to determine the the result of each testcase
+EDpAT stands for Ethernet Dataplane Application Tester. It is a test tool to test ethernet based data plane 
+applications. It can send and receive raw Ethernet packets to one or more ethernet ports. 
+The packets to be sent/received are specified in an input script file in the desired order.
+The tool will read this file as input and send/receive the packets as specified in the file. 
+The received packets are compared against what is specified in the script file to determine the the result of each testcase
 
 # 2. Installation 
 The Makefile has been included in this repository. Just run `make` in the working directory

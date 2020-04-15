@@ -1,14 +1,9 @@
-/*
+/* SPDX-License-Identifier: BSD-3-Clause-Clear
+ * https://spdx.org/licenses/BSD-3-Clause-Clear.html#licenseText
+ * 
  * Copyright (c) 2020-1025 Arvind Sajeev (arvind.sajeev@gmail.com)
-All rights reserved.
-
-Redistribution and use in source and binary forms, with or without modification, are permitted (subject to the limitations in the disclaimer below) provided that the following conditions are met:
-
-Redistributions of source code must retain the above copyright notice, this list of conditions and the following disclaimer.
-Redistributions in binary form must reproduce the above copyright notice, this list of conditions and the following disclaimer in the documentation and/or other materials provided with the distribution. Neither the name of Arvind Sajeev nor the names of its contributors may be used to endorse or promote products derived from this software without specific prior written permission.
-NO EXPRESS OR IMPLIED LICENSES TO ANY PARTY'S PATENT RIGHTS ARE GRANTED BY THIS LICENSE. THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-*/
-
+ * All rights reserved.
+ */
 
 #include <stdio.h>
 #include <string.h>
@@ -38,7 +33,7 @@ NO EXPRESS OR IMPLIED LICENSES TO ANY PARTY'S PATENT RIGHTS ARE GRANTED BY THIS 
 	  MASK_SKIP is stored in SpecifiedPktMask[i] indicating that this 
 	  byte needs to be skipped while comparing with a receved packet.
 	  '*' is not valid for send packet.
-	- if '?' is specifed, it need to be followed by a number K (e.g. ?32)
+	- if '?' is specifed, it need to be followed by a number K(e.g. ?32)
  	  which indicate that this byte needs to be replaced with Kth byte
 	  of previously received packet. Hence zero will be stored in
 	  SpecifiedPkt[i] and K is stored in SpecifiedPktMask[i].
@@ -49,7 +44,7 @@ NO EXPRESS OR IMPLIED LICENSES TO ANY PARTY'S PATENT RIGHTS ARE GRANTED BY THIS 
 typedef enum { OP_UNKNOWN, OP_SEND, OP_RECEIVE } OPERATION;
 
 static OPERATION Operation = OP_UNKNOWN;
-static char EthPortName[MAX_ETH_PORT_NAME_LEN];
+static char EthPortName[MAX_ETH_PORT_NAME_LEN+1];
 static int	BytesInSpecifiedPkt;
 static int	BytesInRecvPkt;
 static int 	cs_array_siz;
@@ -76,10 +71,12 @@ signed short SpecifiedPktMask[MAX_PKT_SIZE];
  *
  *	CheckUnexpectedPackets()
  *	
- *	After the testcase has passed check if there are any other unexpected packets left in the queue
+ *	After the testcase has passed check if there are any other
+ *	unexpected packets left in the queue
  *	It uses receive any to read any packets left in the queue
  *	
- *	Arguments	:	void, also sets the CurrentTestResult to appropriate value
+ *	Arguments	:	void, also sets the CurrentTestResult to
+ *				appropriate value
  *
  *
  *******************/
@@ -87,7 +84,7 @@ signed short SpecifiedPktMask[MAX_PKT_SIZE];
 void CheckUnexpectedPackets(void)
 {
 	EDPAT_RETVAL retVal = EDPAT_SUCCESS;
-	char portName[MAX_ETH_PORT_NAME_LEN];
+	char portName[MAX_ETH_PORT_NAME_LEN+1];
 	unsigned char pkt[MAX_PKT_SIZE];
 	int pktLen = MAX_PKT_SIZE;
 
@@ -112,9 +109,10 @@ void CheckUnexpectedPackets(void)
  *
  *	packetRead
  *
- *	Parse the details from the test statement, set Operation ethport and process special characters
+ *	Parse the details from the test statement, set Operation ethport
+ *	and process special characters
  *
- *	Arguments	:	in	-	Test statement under consideration 
+ *	Arguments	:	in -	Test statement under consideration 
  *
  *	Return 		:	EDPAT_RETVAL
  *
@@ -123,7 +121,7 @@ void CheckUnexpectedPackets(void)
 
 static EDPAT_RETVAL packetRead(char *in)
 {
-	static char statement[MAX_SCRIPT_STATEMENT_LEN];
+	static char statement[MAX_SCRIPT_STATEMENT_LEN+1];
 	char *token, *q;
 	int i;
 	EDPAT_RETVAL retVal;
@@ -144,7 +142,9 @@ static EDPAT_RETVAL packetRead(char *in)
 		
 	}
 
-	strncpy(statement,&in[1],MAX_SCRIPT_STATEMENT_LEN);	// Skip the 1st character Which will be operation 
+	// Skip the     1st character Which will be operation
+	strncpy(statement,&in[1],MAX_SCRIPT_STATEMENT_LEN-1);
+	statement[MAX_SCRIPT_STATEMENT_LEN] = 0;
 	//Copy the ethport name
 	token = strtok(statement," ");
         if (NULL == token)
@@ -163,12 +163,15 @@ static EDPAT_RETVAL packetRead(char *in)
 	}
 
 	strncpy(EthPortName,token,MAX_ETH_PORT_NAME_LEN);
+	EthPortName[MAX_ETH_PORT_NAME_LEN]=0;
+
 	/* Open the port if not already open */
 	retVal = EthPortOpen(EthPortName);
 	if ( 0 >  retVal)
 		return EDPAT_FAILED;
 
-	strncpy(statement,&in[1],MAX_SCRIPT_STATEMENT_LEN);
+	strncpy(statement,&in[1],MAX_SCRIPT_STATEMENT_LEN-1);
+	statement[MAX_SCRIPT_STATEMENT_LEN-1]=0;
 	token = strtok(statement," ");
 
 	BytesInSpecifiedPkt = 0;
@@ -178,40 +181,40 @@ static EDPAT_RETVAL packetRead(char *in)
 		switch(token[0])
 		{	
 			case '&':	// In case checksum field 
-					if (OP_SEND == Operation){
-						char *n1,*n2;
-						n1 = token+1;
-						n2 = strchr(token,'-');
-						if (n2 == NULL)	{
-							ScriptErrorMsgPrint("Expecting Checksum format"
-									"&header_start-header_end");
-						}
-						n2[0] = 0;
-						n2++;
-						int hs = strtol(n1,&q,10);
-						if (n1 ==  q){
-							ScriptErrorMsgPrint(
-							"'%s' is not an integer value",n1);
-						}
-						int he =  strtol(n2,&q,10);
-						if (n2 == q){
-							ScriptErrorMsgPrint(
-							"'%s' is not an integer value",n2);
-						}
-						cs_arr[cs_array_siz].pos = BytesInSpecifiedPkt;
-						cs_arr[cs_array_siz].start = hs;
-						cs_arr[cs_array_siz].end = he;
-
-						cs_array_siz++;
-
-						SpecifiedPktMask[BytesInSpecifiedPkt] = MASK_CS;
-						SpecifiedPkt[BytesInSpecifiedPkt++] = 0;
-						SpecifiedPkt[BytesInSpecifiedPkt] = 0;
-						SpecifiedPktMask[BytesInSpecifiedPkt] = MASK_CS;
-
-						break;
+				if (OP_SEND == Operation){
+					char *n1,*n2;
+					n1 = token+1;
+					n2 = strchr(token,'-');
+					if (n2 == NULL)	{
+						ScriptErrorMsgPrint("Expecting Checksum format"
+								"&header_start-header_end");
 					}
-					VerboseStringPrint("Falling thorugh to the case '*', In receive mode we are not evaluating checksum");
+					n2[0] = 0;
+					n2++;
+					int hs = strtol(n1,&q,10);
+					if (n1 ==  q){
+						ScriptErrorMsgPrint(
+						"'%s' is not an integer value",n1);
+					}
+					int he =  strtol(n2,&q,10);
+					if (n2 == q){
+						ScriptErrorMsgPrint(
+						"'%s' is not an integer value",n2);
+					}
+					cs_arr[cs_array_siz].pos = BytesInSpecifiedPkt;
+					cs_arr[cs_array_siz].start = hs;
+					cs_arr[cs_array_siz].end = he;
+
+					cs_array_siz++;
+
+					SpecifiedPktMask[BytesInSpecifiedPkt] = MASK_CS;
+					SpecifiedPkt[BytesInSpecifiedPkt++] = 0;
+					SpecifiedPkt[BytesInSpecifiedPkt] = 0;
+					SpecifiedPktMask[BytesInSpecifiedPkt] = MASK_CS;
+
+					break;
+				}
+				VerboseStringPrint("Falling thorugh to the case '*', In receive mode we are not evaluating checksum");
 					
 
 			case '*':	// Do not compare
@@ -222,9 +225,11 @@ static EDPAT_RETVAL packetRead(char *in)
 					    "valid only in receive");
 					return EDPAT_FAILED;
 				}
-				//Set the byte as zero and mark in mask as MASK_SKIP
+				/* Set the byte as zero and mark in mask
+				   as MASK_SKIP */
 				SpecifiedPkt[BytesInSpecifiedPkt]  = 0;
-				SpecifiedPktMask[BytesInSpecifiedPkt] = MASK_SKIP;
+				SpecifiedPktMask[BytesInSpecifiedPkt] =
+						MASK_SKIP;
 				break;
 
 
@@ -237,33 +242,36 @@ static EDPAT_RETVAL packetRead(char *in)
 					return EDPAT_FAILED;
 				}
 				// Copy the n value after ?
-				byte = (unsigned char ) strtol(&token[1],&q,10);
+				byte = (unsigned char )
+						strtol(&token[1],&q,10);
 				if ( token == q)
 				{
-					ScriptErrorMsgPrint(
-						"'%s' is not a integer value",token);
-					return EDPAT_FAILED;
+				    ScriptErrorMsgPrint(
+					"'%s' is not a integer value",
+					token);
+				    return EDPAT_FAILED;
 				};
 
 				// Check if within limits
 				if ( MAX_PKT_SIZE < BytesInSpecifiedPkt)
 				{
-					ScriptErrorMsgPrint("Pkt too large");
-					return EDPAT_FAILED;
+				    ScriptErrorMsgPrint("Pkt too large");
+				    return EDPAT_FAILED;
 				};
 
 
 				// Check for tail in the packet 
 				if ((NULL != q) && (0 != q[0]))
 				{
-					ScriptErrorMsgPrint("Invalid character "
+					ScriptErrorMsgPrint(
+						"Invalid character "
 						"at the end of '%s'",token);
 					return EDPAT_FAILED;
 				};
 
 				//Set byte and mask
 				SpecifiedPkt[BytesInSpecifiedPkt]  = 0;
-				SpecifiedPktMask[BytesInSpecifiedPkt] = byte;
+				SpecifiedPktMask[BytesInSpecifiedPkt]=byte;
 				break;
 			default:
 				//Default just copy the byte in
@@ -271,22 +279,25 @@ static EDPAT_RETVAL packetRead(char *in)
 				if ( token == q)
 				{
 					ScriptErrorMsgPrint(
-						"'%s' is not a hex value",token);
+						"'%s' is not a hex value",
+						token);
 					return EDPAT_FAILED;
 				};
 				if ( MAX_PKT_SIZE < BytesInSpecifiedPkt)
 				{
-					ScriptErrorMsgPrint("Pkt too large");
+				       ScriptErrorMsgPrint("Pkt too large");
 					return EDPAT_FAILED;
 				};
 				if ((NULL != q) && (0 != q[0]))
 				{
-					ScriptErrorMsgPrint("Invalid character "
-						"at the end of '%s'",token);
+					ScriptErrorMsgPrint(
+						"Invalid character at the "
+						"end of '%s'",token);
 					return EDPAT_FAILED;
 				};
 				SpecifiedPkt[BytesInSpecifiedPkt]  = byte;
-				SpecifiedPktMask[BytesInSpecifiedPkt] = MASK_EXACT;
+				SpecifiedPktMask[BytesInSpecifiedPkt] =
+						MASK_EXACT;
 		}
 		BytesInSpecifiedPkt++;
 	}
@@ -348,7 +359,9 @@ static short int check_sum(unsigned char *pkt,unsigned int start,unsigned int en
 	}
 
 	unsigned short int ret = ~csum;
-	VerboseStringPrint("Calculated CheckSum for bytes [%d-%d] and got :: %x",start,end,ret);
+	VerboseStringPrint(
+		"Calculated CheckSum for bytes [%d-%d] and got :: %x",
+		start,end,ret);
 	return ret;
 }
 
@@ -386,19 +399,22 @@ static EDPAT_RETVAL packetSend(void)
 
 		else
 		{
-			// In ? <n> case mask is greater than 0 and represents postion in previous received packet
+			/* In ? <n> case mask is greater than 0 and
+			  represents postion in previous received packet */
 			if ( 0 <= SpecifiedPktMask[pktLen])
 			{
-				// Check whether n is within bounds of the previous packet
+				/* Check whether n is within bounds of the
+				   previous packet */
 				if (BytesInRecvPkt > SpecifiedPktMask[pktLen])
 				{
-					pkt[pktLen] = RecvPkt[SpecifiedPktMask[pktLen]];
+					pkt[pktLen] =
+					  RecvPkt[SpecifiedPktMask[pktLen]];
 				}
 				else
 				{
 					ScriptErrorMsgPrint(
-						"Copy position %d is beyond "
-						"received bytes of %d.",
+						"Copy position %d is beyond"
+						" received bytes of %d.",
 						SpecifiedPktMask[pktLen],
 						BytesInRecvPkt);
 					return EDPAT_FAILED;
@@ -408,7 +424,9 @@ static EDPAT_RETVAL packetSend(void)
 
 
 			else if (SpecifiedPktMask[pktLen] == MASK_CS){
-				VerboseStringPrint("Encountered Checksum at %d",pktLen);
+				VerboseStringPrint(
+					"Encountered Checksum at %d",
+					pktLen);
 				continue;
 			}
 
@@ -420,7 +438,8 @@ static EDPAT_RETVAL packetSend(void)
 		}
 	}
 
-	// Now that the full packet is formed compute check sum and fill in various positions
+	/* Now that the full packet is formed compute check sum and fill
+	   in various positions */
 	for (int i = 0;i < cs_array_siz;i++){
 		VerboseStringPrint("Found checksum at %d",cs_arr[i].pos);
 		VerboseStringPrint("For %d",cs_arr[i].start,cs_arr[i].end);
@@ -445,7 +464,8 @@ static EDPAT_RETVAL packetSend(void)
  *
  *	packetReceive 
  *
- * 	Receives packets and checks according to the current testcase statement
+ * 	Receives packets and checks according to the current testcase
+ *	statement
  *	Arguments	:	void
  *	Return 		: 	void
  *
@@ -471,7 +491,8 @@ static EDPAT_RETVAL packetReceive(void)
 
 			TestCaseStringPrint( "Expected packet. Len=%d",
 						BytesInSpecifiedPkt);
-			TestCasePacketPrint(SpecifiedPkt, BytesInSpecifiedPkt);
+			TestCasePacketPrint(SpecifiedPkt,
+					BytesInSpecifiedPkt);
 			return EDPAT_SUCCESS;
 		}
 		return EDPAT_FAILED;
@@ -525,8 +546,11 @@ static EDPAT_RETVAL packetReceive(void)
 		}
 	}
 
-	// Padding is used to make it a minimum size of  60 it its more than that, the packet is just wrong and not bigger than ecpected due to padding
-	if ( (60 < BytesInRecvPkt ) && (BytesInSpecifiedPkt != BytesInRecvPkt))
+	/* Padding is used to make it a minimum size of  60 it its more
+	   than that, the packet is just wrong and not bigger than
+	   ecpected due to padding */
+	if ( (60 < BytesInRecvPkt ) &&
+		(BytesInSpecifiedPkt != BytesInRecvPkt))
 	{
 		CurrentTestResult = EDPAT_TEST_RESULT_FAILED;
 		TestCaseStringPrint("Number of bytes received at '%s' "
@@ -551,10 +575,11 @@ static EDPAT_RETVAL packetReceive(void)
  *
  *	PacketProcess
  *
- *	Processes each packet test case calling receive or send based on operation, calls packetRead to process 
+ *	Processes each packet test case calling receive or send based on
+ *	operation, calls packetRead to process 
  *	Special chars in packet and set up the ethernet ports required
  *
- *	Arguments	:	in	-	the testcase under consideration 
+ *	Arguments:	in -	the testcase under consideration 
  *
  *	Return 		 EDPAT_RETVAL
  *
@@ -580,7 +605,8 @@ EDPAT_RETVAL PacketProcess(char *in)
 			retVal = packetReceive();
 			break;
 		default:
-			ScriptErrorMsgPrint("Zero byte packet is specified");
+			ScriptErrorMsgPrint(
+				"Zero byte packet is specified");
 			retVal = EDPAT_FAILED;
 	}
 	return retVal;

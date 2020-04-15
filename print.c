@@ -1,27 +1,9 @@
-/*
+/* SPDX-License-Identifier: BSD-3-Clause-Clear
+ * https://spdx.org/licenses/BSD-3-Clause-Clear.html#licenseText
+ * 
  * Copyright (c) 2020-1025 Arvind Sajeev (arvind.sajeev@gmail.com)
-All rights reserved.
-
-Redistribution and use in source and binary forms, with or without modification, are permitted 
-(subject to the limitations in the disclaimer below) provided that the following conditions are met:
-
-Redistributions of source code must retain the above copyright notice, this list of conditions and the 
-following disclaimer. Redistributions in binary form must reproduce the above copyright notice, 
-this list of conditions and the following disclaimer in the documentation and/or other materials 
-provided with the distribution. Neither the name of Arvind Sajeev nor the names of its contributors 
-may be used to endorse or promote products derived from this software without specific prior written 
-permission. NO EXPRESS OR IMPLIED LICENSES TO ANY PARTY'S PATENT RIGHTS ARE GRANTED BY THIS LICENSE. 
-THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED
-WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR 
-A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE 
-FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES 
-(INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; 
-OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, 
-OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, 
-EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-*/
-
-
+ * All rights reserved.
+ */
 
 #include <stdio.h>
 #include <string.h>
@@ -51,7 +33,7 @@ static FILE *ReportFp = NULL;
 static FILE *ErrorFp = NULL;
 static EDPAT_BOOL TimestampEnableFlag = EDPAT_FALSE;
 static EDPAT_BOOL VerboseMsgEnableFlag = EDPAT_FALSE;
-static char Msg[MAX_MSG_LEN];
+static char Msg[MAX_MSG_LEN+1];
 
 static const char *getTime(void)
 {
@@ -84,11 +66,12 @@ static void msgPrint(FILE *fp, const char *msg)
 	int lineLen;
 	EDPAT_BOOL firstLineFlag = EDPAT_TRUE;
         static char buf[MAX_CHAR_PER_LINE+1];
-	static char lMsg[MAX_MSG_LEN];
+	static char lMsg[MAX_MSG_LEN+1];
 	char *linePrefix = "## ";
+	char *pMsg;
 
 	strncpy(lMsg,msg,MAX_MSG_LEN);
-	char *pMsg;
+	lMsg[MAX_MSG_LEN]=0;
 
 	pMsg = strtok(lMsg,"\n");
 	while( NULL != pMsg)
@@ -96,7 +79,8 @@ static void msgPrint(FILE *fp, const char *msg)
         	msgLen = strlen(pMsg);
 		if (fp == LogFp)
 		{
-			strncpy(buf,linePrefix,MAX_MSG_LEN);
+			strncpy(buf,linePrefix,MAX_CHAR_PER_LINE);
+			buf[MAX_CHAR_PER_LINE]=0;
 		}
 		else
 		{
@@ -106,7 +90,8 @@ static void msgPrint(FILE *fp, const char *msg)
 			}
 			else
 			{
-				strncpy(buf,"ERROR:",MAX_MSG_LEN);
+				strncpy(buf,"ERROR:",MAX_CHAR_PER_LINE);
+				buf[MAX_CHAR_PER_LINE]=0;
 			}
 		}
 		if ( EDPAT_TRUE == TimestampEnableFlag)
@@ -151,9 +136,10 @@ static void msgPrint(FILE *fp, const char *msg)
  * 
  * 	Print buffer content is hex format
  *	
- * 	Arguments	:	fp	- 	file handle to print
- *				p	- 	pointer to the buffer that needs to be printed
- *				pktLen	- 	length of the buffer to be printed.
+ * 	Arguments:	fp	- file handle to print
+ *			p	- pointer to the buffer that needs
+ *				  to be printed
+ *			pktLen	- length of the buffer to be printed.
  *
  *	Return 		: 	void
  *
@@ -228,8 +214,8 @@ static void pktPrint(FILE *fp, const void *p, const int pktLen)
  *
  * 	Print ethernet header dest src mac addresses
  *
- * 	Arguments	:	fp	- 	file handle to print
- *				p	- 	pointer to ethernet raw packet
+ * 	Arguments	:	fp	- file handle to print
+ *				p	- pointer to ethernet raw packet
  *	Return 		: 	void
  *
  *************************/
@@ -338,10 +324,13 @@ void ScriptErrorMsgPrint( const char *format, ...)
 	va_list ap;
 
 	strncpy(Msg,"Script Error: ",MAX_MSG_LEN);
+	Msg[MAX_MSG_LEN]=0;
+
 	// construct error string from veriable argumnets
 	va_start (ap, format);
 	vsnprintf (&Msg[14], MAX_MSG_LEN, format, ap);
 	va_end (ap);
+	Msg[MAX_MSG_LEN]=0;
 	
 	msgPrint(LogFp,Msg);
 
@@ -384,11 +373,13 @@ void MsgTimestampEnable(void)
  *
  *	TestCaseFinalResultPrint()
  *
- *	It prints the result after running PacketProcess() or CleanupLastTestExecution
+ *	It prints the result after running PacketProcess() or
+ *	CleanupLastTestExecution
  *	
- *	Arguments	:	void, but uses CurrentTestResult and CurrentTestCaseId
+ *	Arguments	: void, but uses CurrentTestResult and
+ *			        CurrentTestCaseId
  *
- *	Return		:	void
+ *	Return		: void
  *
  *
  * ********************************/

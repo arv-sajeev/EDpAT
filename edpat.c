@@ -1,18 +1,9 @@
-/*
+/* SPDX-License-Identifier: BSD-3-Clause-Clear
+ * https://spdx.org/licenses/BSD-3-Clause-Clear.html#licenseText
  * 
- *
-SPDX-License-Identifier: BSD-3-Clause-Clear
-https://spdx.org/licenses/BSD-3-Clause-Clear.html#licenseText
-
-Copyright (c) 2020-1025 Arvind Sajeev (arvind.sajeev@gmail.com)
-All rights reserved.
-
-Redistribution and use in source and binary forms, with or without modification, are permitted (subject to the limitations in the disclaimer below) provided that the following conditions are met:
-
-Redistributions of source code must retain the above copyright notice, this list of conditions and the following disclaimer.
-Redistributions in binary form must reproduce the above copyright notice, this list of conditions and the following disclaimer in the documentation and/or other materials provided with the distribution. Neither the name of Arvind Sajeev nor the names of its contributors may be used to endorse or promote products derived from this software without specific prior written permission.
-NO EXPRESS OR IMPLIED LICENSES TO ANY PARTY'S PATENT RIGHTS ARE GRANTED BY THIS LICENSE. THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-*/
+ * Copyright (c) 2020-1025 Arvind Sajeev (arvind.sajeev@gmail.com)
+ * All rights reserved.
+ */
 
 
 #include <stdio.h>
@@ -59,9 +50,10 @@ unsigned char PktBuf[MAX_PKT_SIZE];
  *
  *   Read test script line-by-line and process.
  *
- *   Arguments 		:	 fileName - INPUT. Name of the test script file to be processsed.
+ *   Arguments 		: fileName - INPUT. Name of the test script file
+ *			  to be processsed.
  *					
- *   Return:		-	 EDPAT_SUCCESS or EDPAT_FAILED
+ *   Return:		- EDPAT_SUCCESS or EDPAT_FAILED
  *
  *
  *
@@ -73,9 +65,10 @@ EDPAT_RETVAL TestScriptProcess(const char *fileName)
 	FILE *fp;
 	int lineLen;
 	int statementLen;
-	static char testScriptStatement[MAX_SCRIPT_STATEMENT_LEN];
+	static char testScriptStatement[MAX_SCRIPT_STATEMENT_LEN+1];
 	
-	// Open the file handle for the script file and add details to the scriptinfo table 
+	/* Open the file handle for the script file and add details to
+	   the scriptinfo table */
 	fp = ScriptOpen(fileName);
 	if (NULL == fp)
 	{
@@ -84,9 +77,11 @@ EDPAT_RETVAL TestScriptProcess(const char *fileName)
 
 	retVal = 1;
 	// Keep reading statements from the opened filepointer 
-	while ( 0 < (statementLen = ScriptReadStatement(fp,testScriptStatement)))
+	while ( 0 < (statementLen =
+			ScriptReadStatement(fp,testScriptStatement)))
 	{
-		//Substitute each occurence of a variable with its coressponding value
+		/* Substitute each occurence of a variable with its
+		   coressponding value */
 		retVal = ScriptSubstituteVariables(testScriptStatement);
 		if (0 > retVal)
 		{
@@ -94,17 +89,24 @@ EDPAT_RETVAL TestScriptProcess(const char *fileName)
 			continue;
 		}
 
-		// If test case fails or is faulty skip until the next testcase ID 
-		if (	( '@' != testScriptStatement[0] ) && (( EDPAT_TEST_RESULT_SKIPPED ==  CurrentTestResult) || ( EDPAT_TEST_RESULT_FAILED ==  CurrentTestResult)))
+		/* If test case fails or is faulty skip until the next
+		   testcase ID */
+		if (( '@' != testScriptStatement[0] ) &&
+		    ( ( EDPAT_TEST_RESULT_SKIPPED == CurrentTestResult) ||
+		      ( EDPAT_TEST_RESULT_FAILED ==  CurrentTestResult)))
 		{
-			// if test case is not passed. Skip to next test statement 
+			/* if test case is not passed. Skip to next test
+			   statement */
 			continue;
 		}
 
 		switch(testScriptStatement[0])
 		{
-			case '#':	// include file an recursivily process the included file as well
-				retVal = ScriptIncludeFile(testScriptStatement);
+			case '#':
+				/* include file an recursivily process the
+				   included file as well */
+				retVal = 
+				   ScriptIncludeFile(testScriptStatement);
 				break;
 			case '@':	// test case ID
 				retVal = GetTestCaseID(testScriptStatement);
@@ -112,16 +114,21 @@ EDPAT_RETVAL TestScriptProcess(const char *fileName)
 			case '<':	// Receive packet
 			case '>':	// Send packet
 
-				if ( EDPAT_TEST_RESULT_UNKNOWN ==  CurrentTestResult)
+				if ( EDPAT_TEST_RESULT_UNKNOWN == 
+							CurrentTestResult)
 				{	
-					//Set to passed when you see the first send case or receive case
+					/*Set to passed when you see the
+					  first send case or receive case */
 					CleanupLastTestExecution();
-					CurrentTestResult = EDPAT_TEST_RESULT_PASSED;
+					CurrentTestResult =
+						EDPAT_TEST_RESULT_PASSED;
 				}
 				if (EDPAT_TRUE != SyntaxCheckOnly)
 				{	
-					//Process the packet given in the receive or send test statement
-					retVal = PacketProcess(testScriptStatement);
+					/* Process the packet given in the
+					   receive or send test statement */
+					retVal =
+					 PacketProcess(testScriptStatement);
 				}
 				else
 				{
@@ -129,11 +136,13 @@ EDPAT_RETVAL TestScriptProcess(const char *fileName)
 				}
 				break;
 			case '$':	// assign value to variable
-				retVal = VariableStoreValue(testScriptStatement);
+				retVal =
+				   VariableStoreValue(testScriptStatement);
 				break;
-				// Unknown command
 			default:
-				ScriptErrorMsgPrint("Unknown statement '%c(%d)'",
+				// Unknown command
+				ScriptErrorMsgPrint(
+					"Unknown statement '%c(%d)'",
 					testScriptStatement[0],
 					testScriptStatement[0]);
 				retVal = EDPAT_FAILED;
@@ -182,7 +191,7 @@ int main(int argc, char *argv[])
 		switch (c)
 		{
 			case 'f':
-				EnableBroadcastPacketFiltering = EDPAT_FALSE;
+				EnableBroadcastPacketFiltering=EDPAT_FALSE;
 				break;
 			case 'h':
 				PrintUsageInfo(argv[0]);
@@ -203,8 +212,8 @@ int main(int argc, char *argv[])
 				PacketReceiveTimeout = atoi(optarg);
 				if (0 >= PacketReceiveTimeout)
 				{
-					printf("\nERROR: Invalid timeout value "
-							"for '-w' option");
+					printf("\nERROR: Invalid timeout "
+						"value for '-w' option");
 					PrintUsageInfo(argv[0]);
 					exit(EXIT_FAILURE);
 				}
@@ -214,14 +223,16 @@ int main(int argc, char *argv[])
 				PrintUsageInfo(argv[0]);
 				exit(EXIT_FAILURE);
 			case '?':
-				printf("\nERROR: unknown option '%c'",optopt);
+				printf("\nERROR: unknown option '%c'",
+						optopt);
 				PrintUsageInfo(argv[0]);
 				exit(EXIT_FAILURE);
 			default:
 				if (isprint (optopt))
 				{
-				   printf("\nERROR: Unknown option `-%c'.\n",
-						optopt);
+				   printf(
+					"\nERROR: Unknown option `-%c'.\n",
+					optopt);
 				}
 				else
 				{
@@ -278,7 +289,8 @@ int main(int argc, char *argv[])
 
 	printf("## Report written to '%s'\n",fileName);
 
-	// This prints the timestamp and also passees the filepointers to the respective print functions in print.c
+	/* This prints the timestamp and also passees the filepointers 
+	   to the respective print functions in print.c */
 	retVal = InitMsgPrint(logFileFp,reportFileFp,errorFileFp);
 	if (EDPAT_SUCCESS != retVal)
 	{

@@ -1,14 +1,9 @@
-/*
+/* SPDX-License-Identifier: BSD-3-Clause-Clear
+ * https://spdx.org/licenses/BSD-3-Clause-Clear.html#licenseText
+ * 
  * Copyright (c) 2020-1025 Arvind Sajeev (arvind.sajeev@gmail.com)
-All rights reserved.
-
-Redistribution and use in source and binary forms, with or without modification, are permitted (subject to the limitations in the disclaimer below) provided that the following conditions are met:
-
-Redistributions of source code must retain the above copyright notice, this list of conditions and the following disclaimer.
-Redistributions in binary form must reproduce the above copyright notice, this list of conditions and the following disclaimer in the documentation and/or other materials provided with the distribution. Neither the name of Arvind Sajeev nor the names of its contributors may be used to endorse or promote products derived from this software without specific prior written permission.
-NO EXPRESS OR IMPLIED LICENSES TO ANY PARTY'S PATENT RIGHTS ARE GRANTED BY THIS LICENSE. THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-*/
-
+ * All rights reserved.
+ */
 
 #include <stdio.h>
 #include <string.h>
@@ -26,13 +21,13 @@ NO EXPRESS OR IMPLIED LICENSES TO ANY PARTY'S PATENT RIGHTS ARE GRANTED BY THIS 
 #include "utils.h"
 
 typedef struct {
-        char    fileName[MAX_FILE_NAME_LEN];
+        char    fileName[MAX_FILE_NAME_LEN+1];
         int     lineNo;
 }  SCRIPT_INFO;
 
 static int ScriptFileDepth = (-1);
 static SCRIPT_INFO ScriptFileInfoTable[MAX_SCRIPT_FILE_DEPTH];
-static char ScriptLine[MAX_SCRIPT_LINE_LEN];
+static char ScriptLine[MAX_SCRIPT_LINE_LEN+1];
 
 
 /***************************
@@ -42,9 +37,13 @@ static char ScriptLine[MAX_SCRIPT_LINE_LEN];
  *
  *	Read a statement from the file provided
  *
- *	Arguments 	: 	fp - the input file handle, also keeps track of the current position of the read
- *				scriptStatement - the statement that is read is loaded to this string
- *				scriptStatement will have comments removed 
+ *	Arguments 	: 	fp - the input file handle, also keeps
+ *				     track of the current position of
+ *				     the read
+ *				scriptStatement - the statement that is
+ *				     read is loaded to this string
+ *				     scriptStatement will have comments
+ *				     removed 
  *	Return 		:	the strlen or length of the statement read
  *
  *
@@ -98,7 +97,8 @@ int ScriptReadStatement(FILE *fp,char *scriptStatement)
 			};
 			if (' ' == ScriptLine[i])
 			{
-				// remove extra spaces jusst keep one if needed
+				/* remove extra spaces jusst keep one
+				   if needed */
 				if ( EDPAT_FALSE == wasLastCharSpace) 
 				{
 					scriptStatement[stLen]
@@ -109,7 +109,7 @@ int ScriptReadStatement(FILE *fp,char *scriptStatement)
 			}
 			else
 			{
-				// store everything else into scriptStatement
+				//store everything else into scriptStatement
 				scriptStatement[stLen] = ScriptLine[i];
 				stLen++;
 				wasLastCharSpace = EDPAT_FALSE;
@@ -128,10 +128,11 @@ int ScriptReadStatement(FILE *fp,char *scriptStatement)
  *	ScriptOpen()
  *
  * 	Opens the file with name given, checks if within MAX limit
- * 	Log the scriptfile depth, name and line no in the ScriptFileInfoTable
+ * 	Log the scriptfile depth,name and line no in the ScriptFileInfoTable
  *
- *	Arguments	:	fileName 	- 	Name of the file to be opened
- *	Return 		:	the file pointer received on opening said file
+ *	Arguments	:	fileName - Name of the file to be opened
+ *	Return 		:	the file pointer received on opening
+ *				said file
  *
  *
  ***************/
@@ -167,9 +168,12 @@ FILE *ScriptOpen(const char *fileName)
 		return NULL;
 	}
 	
-	// Include the file in the scriptfileinfo table by adding its name and line no
+	/* Include the file in the scriptfileinfo table by adding its
+	   name and line no */
 	ScriptFileDepth++;
-	strncpy(ScriptFileInfoTable[ScriptFileDepth].fileName,fileName,MAX_FILE_NAME_LEN);
+	strncpy(ScriptFileInfoTable[ScriptFileDepth].fileName,
+		fileName,MAX_FILE_NAME_LEN);
+	ScriptFileInfoTable[ScriptFileDepth].fileName[MAX_FILE_NAME_LEN]=0;
 	ScriptFileInfoTable[ScriptFileDepth].lineNo=0;
 
 	VerboseStringPrint("Opened script '%s' with Fp=%p",fileName,fp);
@@ -203,10 +207,13 @@ void ScriptClose(FILE *fp)
  *
  * 	ScriptIncludeFile
  *	
- *	Validates and checks the filename in the statment provided and then evaluate the included file
+ *	Validates and checks the filename in the statment provided and
+ *	then evaluate the included file
  * 	
- * 	Arguments	:	in 	-	the current testcase statement under consideration 
- * 	Return 		:	EDPAT_REVAL saying whether the file was successfully included
+ * 	Arguments	: in 	- the current testcase statement under
+ *				  consideration 
+ * 	Return 		:EDPAT_REVAL saying whether the file was
+ *				  successfully included
  *
  *
  *****************************/
@@ -214,18 +221,22 @@ void ScriptClose(FILE *fp)
 EDPAT_RETVAL ScriptIncludeFile(const char *in)
 {
         char *includeFileName;
-	static char line[MAX_SCRIPT_STATEMENT_LEN];
+	static char line[MAX_SCRIPT_STATEMENT_LEN+1];
 	int i;
         int retVal;
 	char *p = line;
 
-	strncpy(line,&in[1],MAX_SCRIPT_LINE_LEN); // Skip 1st character '#' and copy the rest to line
+	// Skip 1st character '#' and copy the rest to line
+	strncpy(line,&in[1],MAX_SCRIPT_STATEMENT_LEN); 
+	line[MAX_SCRIPT_STATEMENT_LEN]=0;
+
         includeFileName = strtok(p," ");	//Find include filename
 
 	// Error handle
         if (NULL == includeFileName)
         {
-                ScriptErrorMsgPrint("Missing name of the file to be include");
+                ScriptErrorMsgPrint(
+			"Missing name of the file to be include");
                 return EDPAT_FAILED;
         }
 
@@ -247,7 +258,8 @@ EDPAT_RETVAL ScriptIncludeFile(const char *in)
         p = strtok(NULL," ");
         if (NULL != p)
 	{
-                ScriptErrorMsgPrint("Unexpected string '%s' after file name",p);
+                ScriptErrorMsgPrint(
+			"Unexpected string '%s' after file name",p);
                 return EDPAT_FAILED;
 	}
 
@@ -260,10 +272,11 @@ EDPAT_RETVAL ScriptIncludeFile(const char *in)
  *
  *	ScriptBacktracePrint
  *
- *	Prints the backtrace in case something goes wrong, info all from the scriptInfo table 
- *	with the names of othe files and the line number progress within the file
+ *	Prints the backtrace in case something goes wrong, info all from
+ *	the scriptInfo table with the names of othe files and the line
+ *	number progress within the file
  *
- * 	Arguments	:	fp	-	The output file pointer 
+ * 	Arguments	:	fp	-i The output file pointer 
  * 	Return 		: 	void
  *
  * **********************/
@@ -286,10 +299,12 @@ void ScriptBacktracePrint(FILE *fp)
  *
  *	ScriptSubstituteVariables()
  *
- *	Substitute the variables in the test statement with the corressponding values in the VarList
+ *	Substitute the variables in the test statement with the 
+ *	corressponding values in the VarList
  *
- *	Arguments	:	iline			-	the testcase statement that is currently under consideration
- *	Return		:	substituteCount		-	the number of substitution made
+ *	Arguments	: iline	- the testcase statement that is
+ *				  currently under consideration
+ *	Return		: substituteCount - the number of substitution made
  *
  *
  * ***************************/
@@ -300,9 +315,10 @@ int  ScriptSubstituteVariables(char *iline)
 	char *inPtr, *outPtr, *varPtr;
 	char *varName, *varValue;
 	int substituteCount = 0;
-	char oline[MAX_SCRIPT_STATEMENT_LEN];
+	char oline[MAX_SCRIPT_STATEMENT_LEN+1];
+	int inLen;
 
-        inPtr = &iline[1]; 
+	inLen = strlen(iline);
 
 	//Copy just the first byte i.e the command to the output buffer
         oline[0]=iline[0]; 
@@ -310,15 +326,15 @@ int  ScriptSubstituteVariables(char *iline)
 	//Null terminate after operation 
 
 	// Get position of the first occurence of a dollar
+        inPtr = &iline[1]; 
         varPtr = strchr(inPtr,'$');
         while(NULL != varPtr)
         {
 		substituteCount++;
 		// Set the dollar character as 0 
 		varPtr[0] =0;
-		strcat(oline,inPtr);
 		//Copy string until the varPtr into the outline
-		inPtr += (strlen(inPtr) + 1);
+		strcat(oline,inPtr);
 
 		// Read variable name
 		varPtr++; 	// skip '$' character
@@ -333,25 +349,29 @@ int  ScriptSubstituteVariables(char *iline)
 		varValue = VariableGetValue(varName);
 		if (NULL == varValue)
 		{
-			ScriptErrorMsgPrint("Undefined variable '%s'",varName);
+			ScriptErrorMsgPrint(
+				"Undefined variable '%s'",varName);
 			return -1;
 		}
 
 		//Add value coressponding to the variable to output buffer
 		strcat(oline,varValue);
 		strcat(oline," ");
-
-		inPtr += (strlen(varName) + 1);
+		inPtr = varPtr + (strlen(varName) + 1);
 
 		//Find next variable
         	varPtr = strchr(inPtr,'$');
         }
 
-	//Concatenate the part left after the last variable inclued inthe script
-	strcat(oline,inPtr);
+	/* Concatenate the part left after the last variable inclued 
+		inthe script */
+	if (inLen > (inPtr - iline))
+	{
+		strcat(oline,inPtr);
+	};
 	if (0 !=  substituteCount)
 	{
-		strncpy(iline,oline,MAX_SCRIPT_LINE_LEN);
+		strcpy(iline,oline);
 		retVal = ScriptSubstituteVariables(iline);
 		if (0 > retVal) return -1;
 	}

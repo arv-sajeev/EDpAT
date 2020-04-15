@@ -1,14 +1,9 @@
-/*
+/* SPDX-License-Identifier: BSD-3-Clause-Clear
+ * https://spdx.org/licenses/BSD-3-Clause-Clear.html#licenseText
+ * 
  * Copyright (c) 2020-1025 Arvind Sajeev (arvind.sajeev@gmail.com)
-All rights reserved.
-
-Redistribution and use in source and binary forms, with or without modification, are permitted (subject to the limitations in the disclaimer below) provided that the following conditions are met:
-
-Redistributions of source code must retain the above copyright notice, this list of conditions and the following disclaimer.
-Redistributions in binary form must reproduce the above copyright notice, this list of conditions and the following disclaimer in the documentation and/or other materials provided with the distribution. Neither the name of Arvind Sajeev nor the names of its contributors may be used to endorse or promote products derived from this software without specific prior written permission.
-NO EXPRESS OR IMPLIED LICENSES TO ANY PARTY'S PATENT RIGHTS ARE GRANTED BY THIS LICENSE. THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-*/
-
+ * All rights reserved.
+ */
 
 #include <stdio.h>
 #include <string.h>
@@ -38,9 +33,9 @@ static int NextFreeVarListIndex = 0;
  *
  *   Store a variable and its value in VarList[] table
  *
- *   Arguments : testScriptStatement - 	INPUT. A null terminated string which a the 
- *					Test script statement in format
- *					$<varName>=<varVal>
+ *   Arguments : testScriptStatement - 	INPUT. A null terminated string
+ *			which a the Test script statement in format
+ *			$<varName>=<varVal>
  *
  *   Return:	- EDPAT_SUCESS or EDPAT_FAILED
  *
@@ -48,13 +43,16 @@ static int NextFreeVarListIndex = 0;
 
 EDPAT_RETVAL VariableStoreValue(const char *testScriptStatement)
 {
-        char tmp[MAX_SCRIPT_STATEMENT_LEN];
+        char tmp[MAX_SCRIPT_STATEMENT_LEN+1];
         char *varName;
         char *varValue;
         int i;
 
-	/* check syntax and seperate variable name and its value from statment */
-        strncpy(tmp,&testScriptStatement[1],MAX_SCRIPT_STATEMENT_LEN);
+	/* check syntax and seperate variable name and its value
+	   from statment */
+        strncpy(tmp,&testScriptStatement[1],MAX_SCRIPT_STATEMENT_LEN-1);
+	tmp[MAX_SCRIPT_STATEMENT_LEN]=0;
+
         varName = tmp;
         varValue = strchr(tmp,'=');
         if (NULL == varValue)
@@ -62,7 +60,8 @@ EDPAT_RETVAL VariableStoreValue(const char *testScriptStatement)
                 ScriptErrorMsgPrint("Expecting the format $vaname=value");
                 return EDPAT_FAILED;
         }
-	// cz this is the point where the = sign is found puttinh a 0 makes it two different strings
+	/* cz this is the point where the = sign is found puttinh a 0
+	   makes it two different strings */
         varValue[0] = 0; // null teminate varName;
 
         varValue++; // skil '='
@@ -70,7 +69,8 @@ EDPAT_RETVAL VariableStoreValue(const char *testScriptStatement)
         TrimStr(varName);
         TrimStr(varValue);
 
-        // check variable is already existing. If yes, overwrite value  log this in logfile if in verbose mode
+        /* check variable is already existing. If yes, overwrite value 
+	   log this in logfile if in verbose mode */
 	
         for(i=0; i < NextFreeVarListIndex; i++)
         {
@@ -82,8 +82,8 @@ EDPAT_RETVAL VariableStoreValue(const char *testScriptStatement)
                                 VarList[i].varValue,
                                 varValue);
                         free(VarList[i].varValue);
-                        VarList[i].varValue = malloc(strlen(varValue));
-                        strncpy(VarList[i].varValue,varValue,MAX_SCRIPT_LINE_LEN);
+                        VarList[i].varValue = malloc(strlen(varValue)+1);
+                        strcpy(VarList[i].varValue,varValue);
                         return EDPAT_SUCCESS;
                 }
         }
@@ -96,10 +96,10 @@ EDPAT_RETVAL VariableStoreValue(const char *testScriptStatement)
 			NextFreeVarListIndex, MAX_VAR_COUNT);
 			return EDPAT_FAILED;
 	}
-        VarList[NextFreeVarListIndex].varName = malloc(strlen(varName));
-        VarList[NextFreeVarListIndex].varValue = malloc(strlen(varValue));
-        strncpy(VarList[NextFreeVarListIndex].varName,varName,MAX_FILE_NAME_LEN);
-        strncpy(VarList[NextFreeVarListIndex].varValue,varValue,MAX_SCRIPT_LINE_LEN);
+        VarList[NextFreeVarListIndex].varName = malloc(strlen(varName)+1);
+        VarList[NextFreeVarListIndex].varValue = malloc(strlen(varValue)+1);
+        strcpy(VarList[NextFreeVarListIndex].varName,varName);
+        strcpy(VarList[NextFreeVarListIndex].varValue,varValue);
         NextFreeVarListIndex++;
 	VerboseStringPrint("Variable '%s' with value '%s' added.",
 			varName,varValue);
@@ -112,7 +112,8 @@ EDPAT_RETVAL VariableStoreValue(const char *testScriptStatement)
  *
  *   Get value of a varible from the table.
  *
- *   Arguments	:	varName - Name for the variable for which value is needed.
+ *   Arguments	:	varName - Name for the variable for which value
+ *				  is needed.
  *
  *   Return	:	value of the variable. NULL if not found.
  *
@@ -144,10 +145,11 @@ char *VariableGetValue(const char *varName)
 void VariablePrintValues(void)
 {
 	int i;
-	static char msg[MAX_SCRIPT_STATEMENT_LEN];
-	static char var[MAX_SCRIPT_LINE_LEN];
+	static char msg[MAX_SCRIPT_STATEMENT_LEN+1];
+	static char var[MAX_SCRIPT_LINE_LEN+1];
 
 	strncpy(msg,"Variables Stored:",MAX_SCRIPT_STATEMENT_LEN);
+	msg[MAX_SCRIPT_STATEMENT_LEN]=0;
 
 	for(i=0; i < NextFreeVarListIndex; i++)
 	{
@@ -161,7 +163,10 @@ void VariablePrintValues(void)
 		else
 		{
 			VerboseStringPrint(msg);
-			strncpy(msg,"Variables Stored(Next set):",MAX_SCRIPT_LINE_LEN);
+			strncpy(msg,"Variables Stored(Next set):",
+				MAX_SCRIPT_LINE_LEN);
+			msg[MAX_SCRIPT_STATEMENT_LEN]=0;
+			
 		}
 	}
 	VerboseStringPrint(msg);
