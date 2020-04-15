@@ -39,6 +39,7 @@ check whether you are receiving the required response which is an ARP Reply with
 ## 2. ICMP
 1. The file `echo.edpat` in `sample_tests` contains a sample ICMP echo request testscript
 1. Notice that the checksum calculation functionality has been used here for the IP and ICMP header
+1. Note that for IP only header is considered while calculating checksum but for ICMP payload the entire ICMP datagram is considered
 1. Refer [ICMP payload](https://tools.ietf.org/html/rfc6747) to make custom packets
 
  
